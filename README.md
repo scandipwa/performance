@@ -37,3 +37,7 @@ Classes implementing the post-processor:
 Classes implementing the pre-processor:
 1. ScandiPWA\CatalogGraphQl\Model\Variant\Collection
 2. ScandiPWA\WishlistGraphQl\Model\Resolver\WishlistItemsResolver
+
+Classes added as pre-processors:
+1. ScandiPWA\ReviewsGraphQl\Model\Resolver\Products\DataProvider\Product\CollectionProcessor\ReviewProcessor
+2. ScandiPWA\CatalogGraphQl\Model\Resolver\Products\DataProvider\Product\CollectionProcessor\ImagesProcessor
