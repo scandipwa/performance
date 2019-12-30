@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!-- 
+/**
+ * @category    ScandiPWA
+ * @package     ScandiPWA_Performance
+ * @author      Alfreds Genkins <info@scandiweb.com>
+ * @copyright   Copyright (c) 2019 Scandiweb, Ltd (https://scandiweb.com)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
+    <module name="ScandiPWA_Performance">
+        <sequence>
+            <module name="Magento_CatalogGraphQl"/>
+            <module name="ScandiPWA_CatalogGraphQl"/>
+        </sequence>
+    </module>
+</config>

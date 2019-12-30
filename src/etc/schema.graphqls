@@ -1,0 +1,23 @@
+# @category    ScandiPWA
+# @package     ScandiPWA_Performance
+# @author      Alfreds Genkins <info@scandiweb.com>
+# @copyright   Copyright (c) 2019 Scandiweb, Ltd (https://scandiweb.com)
+
+interface ProductInterface {
+    image: OptimizedProductImage @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+    small_image: OptimizedProductImage @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+    thumbnail: OptimizedProductImage @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+    only_x_left_in_stock: Float @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+    stock_status: ProductStockStatus @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+    attributes: [AttributeWithValue] @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+}
+
+type OptimizedProductImage {
+     path: String
+     url: String
+     label: String
+}
+
+type WishlistItem {
+     product: ProductInterface @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+}
