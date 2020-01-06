@@ -14,6 +14,13 @@ processing function (see example in implementations).
 the loaded data afterwards (using the collection itself) - use `CollectionPostProcessor`, register 
 the processor there in the same way as for `DataPostProcessor`.
 
+### Related modules:
+
+- [quote-graphql](https://github.com/scandipwa/quote-graphql)
+- [wishlist-graphql](https://github.com/scandipwa/wishlist-graphql)
+- [catalog-graphql](https://github.com/scandipwa/catalog-graphql)
+- [reviews-graphql](https://github.com/scandipwa/reviews-graphql)
+
 ### Initial motivation:
 
 > CASE ONE: The data can not be requested along with product collection
