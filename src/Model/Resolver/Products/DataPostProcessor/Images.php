@@ -8,25 +8,27 @@
 
 declare(strict_types=1);
 
-namespace ScandiPWA\Performance\Model\Resolver\Products\PostProcessor;
+namespace ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor;
 
 use Exception;
 use Magento\Catalog\Helper\Image;
-use Magento\Catalog\Helper\Image as ImageHelper;
 use Magento\Catalog\Model\Product;
+use Magento\Framework\App\Area;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\View\ConfigInterface;
 use Magento\Catalog\Model\Product\ImageFactory;
-use ScandiPWA\Performance\Api\ProductPostProcessorInterface;
-use ScandiPWA\Performance\Model\Resolver\Products\PostProcessorTrait;
+use Magento\Store\Model\App\Emulation;
+use Magento\Store\Model\StoreManagerInterface;
+use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
+use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
 
 /**
  * Class Images
- * @package ScandiPWA\Performance\Model\Resolver\Products\PostProcessor
+ * @package ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor
  */
-class Images implements ProductPostProcessorInterface
+class Images implements ProductsDataPostProcessorInterface
 {
-    use PostProcessorTrait;
+    use ResolveInfoFieldsTrait;
 
     const IMAGE_FIELDS = ['thumbnail', 'small_image', 'image'];
 
@@ -46,21 +48,37 @@ class Images implements ProductPostProcessorInterface
     protected $productImageFactory;
 
     /**
+     * @var Emulation
+     */
+    protected $emulation;
+
+    /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
      * Images constructor.
      *
      * @param ImageFactory $productImageFactory
      * @param ConfigInterface $presentationConfig
      * @param Image $imageHelper
+     * @param Emulation $emulation
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         ImageFactory $productImageFactory,
         ConfigInterface $presentationConfig,
-        Image $imageHelper
+        Image $imageHelper,
+        Emulation $emulation,
+        StoreManagerInterface $storeManager
     ) {
 
         $this->imageHelper = $imageHelper;
         $this->presentationConfig = $presentationConfig;
         $this->productImageFactory = $productImageFactory;
+        $this->emulation = $emulation;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -92,7 +110,7 @@ class Images implements ProductPostProcessorInterface
     public function process(
         array $products,
         string $graphqlResolvePath,
-        ResolveInfo $graphqlResolveInfo,
+        $graphqlResolveInfo,
         ?array $processorOptions = []
     ): callable {
         $productImages = [];
@@ -106,6 +124,9 @@ class Images implements ProductPostProcessorInterface
             return function (&$productData) {
             };
         }
+
+        $storeId = $this->storeManager->getStore()->getId();
+        $this->emulation->startEnvironmentEmulation($storeId, Area::AREA_FRONTEND, true);
 
         /** @var Product $product */
         foreach ($products as $product) {
@@ -125,8 +146,14 @@ class Images implements ProductPostProcessorInterface
             }
         }
 
+        $this->emulation->stopEnvironmentEmulation();
+
         return function (&$productData) use ($productImages) {
-            $productId = $productData['id'];
+            if (!isset($productData['entity_id'])) {
+                return;
+            }
+
+            $productId = $productData['entity_id'];
 
             if (!isset($productImages[$productId])) {
                 return;
@@ -152,19 +179,27 @@ class Images implements ProductPostProcessorInterface
             return $this->imageHelper->getDefaultPlaceholderUrl($imageType);
         }
 
-        $imageId = sprintf('catalog_product_media_%s', $imageType);
+        $imageId = sprintf('scandipwa_%s', $imageType);
 
-        $viewImageConfig = $this->presentationConfig->getViewConfig()->getMediaAttributes(
-            'Magento_Catalog',
-            ImageHelper::MEDIA_TYPE_CONFIG_NODE,
-            $imageId
-        );
+        $viewImageConfig = $this->presentationConfig
+            ->getViewConfig()
+            ->getMediaAttributes(
+                'Magento_Catalog',
+                Image::MEDIA_TYPE_CONFIG_NODE,
+                $imageId
+            );
 
         $image = $this->productImageFactory->create();
 
+        if (isset($viewImageConfig['width'])) {
+            $image->setWidth((int) $viewImageConfig['width']);
+        }
+
+        if (isset($viewImageConfig['height'])) {
+            $image->setHeight((int) $viewImageConfig['height']);
+        }
+
         $image
-            ->setWidth((int) $viewImageConfig['width'])
-            ->setHeight((int) $viewImageConfig['height'])
             ->setDestinationSubdir($imageType)
             ->setBaseFile($imagePath);
 

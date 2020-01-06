@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-namespace ScandiPWA\Performance\Model\Resolver\Products\PostProcessor;
+namespace ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor;
 
 use Magento\CatalogInventory\Model\Configuration;
 use Magento\Framework\Api\SearchCriteriaBuilder;
@@ -17,16 +17,16 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventoryApi\Api\SourceItemRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
-use ScandiPWA\Performance\Api\ProductPostProcessorInterface;
-use ScandiPWA\Performance\Model\Resolver\Products\PostProcessorTrait;
+use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
+use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
 
 /**
  * Class Images
- * @package ScandiPWA\Performance\Model\Resolver\Products\PostProcessor
+ * @package ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor
  */
-class Stocks implements ProductPostProcessorInterface
+class Stocks implements ProductsDataPostProcessorInterface
 {
-    use PostProcessorTrait;
+    use ResolveInfoFieldsTrait;
 
     const ONLY_X_LEFT_IN_STOCK = 'only_x_left_in_stock';
 
@@ -100,7 +100,7 @@ class Stocks implements ProductPostProcessorInterface
     public function process(
         array $products,
         string $graphqlResolvePath,
-        ResolveInfo $graphqlResolveInfo,
+        $graphqlResolveInfo,
         ?array $processorOptions = []
     ): callable {
         $productStocks = [];
@@ -168,7 +168,11 @@ class Stocks implements ProductPostProcessorInterface
         }
 
         return function (&$productData) use ($productStocks) {
-            $productId = $productData['id'];
+            if (!isset($productData['entity_id'])) {
+                return;
+            }
+
+            $productId = $productData['entity_id'];
 
             if (!isset($productStocks[$productId])) {
                 return;

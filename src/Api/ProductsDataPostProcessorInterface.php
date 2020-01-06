@@ -12,7 +12,7 @@ use GraphQL\Language\AST\FieldNode;
 use Magento\Catalog\Model\Product;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 
-interface ProductPostProcessorInterface
+interface ProductsDataPostProcessorInterface
 {
     /**
      * @param Product[] $products
@@ -24,7 +24,7 @@ interface ProductPostProcessorInterface
     public function process(
         array $products,
         string $graphqlResolvePath,
-        ResolveInfo $graphqlResolveInfo,
+        $graphqlResolveInfo,
         ?array $processorOptions = []
     ): callable;
 }

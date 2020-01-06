@@ -13,9 +13,9 @@ interface ProductInterface {
 }
 
 type OptimizedProductImage {
-     path: String
-     url: String
-     label: String
+    path: String
+    url: String
+    label: String
 }
 
 type WishlistItem {

@@ -8,14 +8,14 @@
 
 declare(strict_types=1);
 
-namespace ScandiPWA\Performance\Model\Resolver;
+namespace ScandiPWA\Performance\Model\Resolver\Products;
 
 use GraphQL\Language\AST\FieldNode;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use ScandiPWA\Performance\Api\ProductPostProcessorInterface;
+use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
 use Magento\Catalog\Model\Product;
 
-class ProductPostProcessor
+class DataPostProcessor
 {
     /**
      * Please use DI to change this property
@@ -43,16 +43,16 @@ class ProductPostProcessor
     public function process(
         array $products,
         string $graphqlResolvePath,
-        ResolveInfo $graphqlResolveInfo,
+        $graphqlResolveInfo,
         array $processorOptions = []
-    ) {
+    ): array {
         $processorsCallbacks = array_map(function ($processor) use (
             $products,
             $graphqlResolvePath,
             $graphqlResolveInfo,
             $processorOptions
         ) {
-            /** @var ProductPostProcessorInterface $processor */
+            /** @var ProductsDataPostProcessorInterface $processor */
             return $processor->process(
                 $products,
                 $graphqlResolvePath,

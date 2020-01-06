@@ -8,12 +8,20 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="ScandiPWA\CatalogGraphQl\Model\Resolver\ConfigurableVariant">
+    <type name="ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor">
         <arguments>
             <argument name="processors" xsi:type="array">
-                <item name="attributes" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\PostProcessor\Attributes</item>
-                <item name="images" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\PostProcessor\Images</item>
-                <item name="stocks" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\PostProcessor\Stocks</item>
+                <item name="attributes" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor\Attributes</item>
+                <item name="images" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor\Images</item>
+                <item name="stocks" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor\Stocks</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="ScandiPWA\Performance\Model\Resolver\Products\CollectionPostProcessor">
+        <arguments>
+            <argument name="processors" xsi:type="array">
+                <item name="media_gallery" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\CollectionPostProcessor\MediaGallery</item>
+                <item name="options" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\CollectionPostProcessor\Options</item>
             </argument>
         </arguments>
     </type>

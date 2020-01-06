@@ -6,12 +6,12 @@
  * @copyright   Copyright (c) 2019 Scandiweb, Ltd (https://scandiweb.com)
  */
 
-namespace ScandiPWA\Performance\Model\Resolver\Products;
+namespace ScandiPWA\Performance\Model\Resolver;
 
 use GraphQL\Language\AST\FieldNode;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 
-trait PostProcessorTrait
+trait ResolveInfoFieldsTrait
 {
     /**
      * Take the main info about common field
