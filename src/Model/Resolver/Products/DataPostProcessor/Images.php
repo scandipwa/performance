@@ -14,8 +14,6 @@ use Exception;
 use Magento\Catalog\Helper\Image;
 use Magento\Catalog\Model\Product;
 use Magento\Framework\App\Area;
-use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Framework\View\ConfigInterface;
 use Magento\Catalog\Model\Product\ImageFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\StoreManagerInterface;
@@ -31,11 +29,6 @@ class Images implements ProductsDataPostProcessorInterface
     use ResolveInfoFieldsTrait;
 
     const IMAGE_FIELDS = ['thumbnail', 'small_image', 'image'];
-
-    /**
-     * @var ConfigInterface
-     */
-    protected $presentationConfig;
 
     /**
      * @var Image
@@ -61,21 +54,18 @@ class Images implements ProductsDataPostProcessorInterface
      * Images constructor.
      *
      * @param ImageFactory $productImageFactory
-     * @param ConfigInterface $presentationConfig
      * @param Image $imageHelper
      * @param Emulation $emulation
      * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         ImageFactory $productImageFactory,
-        ConfigInterface $presentationConfig,
         Image $imageHelper,
         Emulation $emulation,
         StoreManagerInterface $storeManager
     ) {
 
         $this->imageHelper = $imageHelper;
-        $this->presentationConfig = $presentationConfig;
         $this->productImageFactory = $productImageFactory;
         $this->emulation = $emulation;
         $this->storeManager = $storeManager;
@@ -140,7 +130,7 @@ class Images implements ProductsDataPostProcessorInterface
 
                 $productImages[$id][$imageType] = [
                     'path' => $imagePath,
-                    'url' => $this->getImageUrl($imageType, $imagePath),
+                    'url' => $this->getImageUrl($imageType, $imagePath, $product),
                     'label' => $imageLabel ?? $product->getName()
                 ];
             }
@@ -168,12 +158,14 @@ class Images implements ProductsDataPostProcessorInterface
     /**
      * @param string $imageType
      * @param string|null $imagePath
+     * @param Product $product
      * @return string
      * @throws Exception
      */
     protected function getImageUrl(
         string $imageType,
-        ?string $imagePath
+        ?string $imagePath,
+        $product
     ): string {
         if (!isset($imagePath)) {
             return $this->imageHelper->getDefaultPlaceholderUrl($imageType);
@@ -181,27 +173,16 @@ class Images implements ProductsDataPostProcessorInterface
 
         $imageId = sprintf('scandipwa_%s', $imageType);
 
-        $viewImageConfig = $this->presentationConfig
-            ->getViewConfig()
-            ->getMediaAttributes(
-                'Magento_Catalog',
-                Image::MEDIA_TYPE_CONFIG_NODE,
-                $imageId
-            );
-
-        $image = $this->productImageFactory->create();
-
-        if (isset($viewImageConfig['width'])) {
-            $image->setWidth((int) $viewImageConfig['width']);
-        }
-
-        if (isset($viewImageConfig['height'])) {
-            $image->setHeight((int) $viewImageConfig['height']);
-        }
-
-        $image
-            ->setDestinationSubdir($imageType)
-            ->setBaseFile($imagePath);
+        $image = $this->imageHelper
+            ->init(
+                $product,
+                $imageId,
+                ['type' => $imageType]
+            )
+            ->constrainOnly(true)
+            ->keepAspectRatio(true)
+            ->keepTransparency(true)
+            ->keepFrame(false);
 
         return $image->getUrl();
     }
