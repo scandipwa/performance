@@ -274,6 +274,9 @@ class Attributes implements ProductsDataPostProcessorInterface
             // Create storage for future attributes
             $productAttributes[$productId] = [];
 
+            /**
+             * @var Attribute $attribute
+             */
             foreach ($product->getAttributes() as $attributeCode => $attribute) {
                 if (!$attribute->getIsVisibleOnFront()) {
                     continue;
@@ -282,7 +285,7 @@ class Attributes implements ProductsDataPostProcessorInterface
                 $productAttributes[$productId][$attributeCode] = [
                     'attribute_code' => $attribute->getAttributeCode(),
                     'attribute_type' => $attribute->getFrontendInput(),
-                    'attribute_label' => $attribute->getFrontendLabel(),
+                    'attribute_label' => $attribute->getStoreLabel(),
                     'attribute_id' => $attribute->getAttributeId(),
                     'attribute_options' => []
                 ];

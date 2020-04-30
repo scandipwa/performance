@@ -29,7 +29,12 @@ class Collection extends CoreCollection
             if (!is_array($attribute)) {
                 $attribute = [$attribute];
             }
+
             foreach ($attribute as $attributeCode) {
+                if (is_object($attributeCode)) {
+                    $attributeCode = $attributeCode->getAttributeCode();
+                }
+
                 if ($attributeCode == '*') {
                     foreach ($this->getEntity()->getAllTableColumns() as $column) {
                         $this->getSelect()->columns('e.' . $column);

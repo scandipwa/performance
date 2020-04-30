@@ -12,8 +12,6 @@
         <sequence>
             <module name="Magento_CatalogGraphQl"/>
             <module name="ScandiPWA_CatalogGraphQl"/>
-            <module name="Magento_InventoryApi"/>
-            <module name="Magento_CatalogInventory"/>
         </sequence>
     </module>
 </config>
