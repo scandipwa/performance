@@ -25,4 +25,6 @@
             </argument>
         </arguments>
     </type>
+    <preference for="Magento\CatalogSearch\Model\Indexer\Fulltext\Action\Full"
+                type="ScandiPWA\Performance\Model\Indexer\Fulltext\Action\Full"/>
 </config>
