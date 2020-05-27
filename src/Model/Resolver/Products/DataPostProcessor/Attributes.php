@@ -137,9 +137,10 @@ class Attributes implements ProductsDataPostProcessorInterface
             }
         }
     }
-
+    
     /**
      * Append options to attribute options
+     *
      * @param $attributes ProductAttributeInterface[]
      * @param $products ExtensibleDataInterface[]
      * @param $productAttributes array
@@ -150,7 +151,7 @@ class Attributes implements ProductsDataPostProcessorInterface
         array $products,
         array $swatchAttributes,
         array &$productAttributes
-    ) {
+    ): void {
         $attributeCodes = array_keys($attributes);
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter('main_table.attribute_code', $attributeCodes, 'in')
@@ -168,17 +169,56 @@ class Attributes implements ProductsDataPostProcessorInterface
         foreach ($products as $product) {
             $id = $product->getId();
 
+            $configuration = $product->getTypeId() === 'configurable'
+                ? $product->getTypeInstance()->getConfigurableOptions($product)
+                : [];
+
             foreach ($detailedAttributes as $attribute) {
                 $key = $attribute->getAttributeCode();
+
+                if (!isset($productAttributes[$id][$key])) {
+                    continue;
+                }
+
+                $productAttributes[$id][$key]['attribute_options'] = [];
+                $variantAttributeValues = [];
+
+                if ($product->getTypeId() === 'configurable') {
+                    $attributeId = $attribute->getAttributeId();
+                    $productAttributeVariants = $configuration[$attributeId] ?? [];
+                    $variantAttributeValues = array_column($productAttributeVariants, 'value_index');
+                }
+
+                if (!isset($productAttributes[$id][$key]['attribute_value'])
+                    && !count($variantAttributeValues)
+                ) {
+                    continue;
+                }
+
+                // Merge all attribute values into one array(map) and flip values with keys (convert to hash map)
+                // This used to bring faster access check for value existance.
+                // Hash key variable check is faster then traditional search.
+                $values = array_flip( // Flip Array
+                    array_merge( // phpcs:ignore
+                        array_filter( // explode might return array with empty value, remove such values
+                            explode(',', $productAttributes[$id][$key]['attribute_value'] ?? '')
+                        ),
+                        $variantAttributeValues
+                    )
+                );
+
                 $options = $attribute->getOptions();
                 array_shift($options);
-
                 $productAttributes[$id][$key]['attribute_options'] = [];
 
                 foreach ($options as $option) {
                     $value = $option->getValue();
-                    $optionIds[] = $value;
 
+                    if (!isset($values[$value])) {
+                        continue;
+                    }
+
+                    $optionIds[] = $value;
                     $productAttributes[$id][$key]['attribute_options'][$value] = [
                         'value' => $value,
                         'label' => $option->getLabel()
