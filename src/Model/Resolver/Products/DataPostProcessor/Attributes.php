@@ -186,7 +186,9 @@ class Attributes implements ProductsDataPostProcessorInterface
                 if ($product->getTypeId() === 'configurable') {
                     $attributeId = $attribute->getAttributeId();
                     $productAttributeVariants = $configuration[$attributeId] ?? [];
-                    $variantAttributeValues = array_column($productAttributeVariants, 'value_index');
+                    $variantAttributeValues = array_filter(
+                        array_column($productAttributeVariants, 'value_index')
+                    );
                 }
 
                 if (!isset($productAttributes[$id][$key]['attribute_value'])
