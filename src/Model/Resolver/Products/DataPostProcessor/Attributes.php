@@ -128,7 +128,6 @@ class Attributes implements ProductsDataPostProcessorInterface
 
                 if (!$attributeValue) {
                     // Remove all empty attributes
-//                    unset($productAttributes[$productId][$attributeCode]);
                     continue;
                 }
 
@@ -137,7 +136,7 @@ class Attributes implements ProductsDataPostProcessorInterface
             }
         }
     }
-    
+
     /**
      * Append options to attribute options
      *
@@ -186,20 +185,22 @@ class Attributes implements ProductsDataPostProcessorInterface
                 if ($product->getTypeId() === 'configurable') {
                     $attributeId = $attribute->getAttributeId();
                     $productAttributeVariants = $configuration[$attributeId] ?? [];
+
                     $variantAttributeValues = array_filter(
                         array_column($productAttributeVariants, 'value_index')
                     );
                 }
 
-                if (!isset($productAttributes[$id][$key]['attribute_value'])
+                if (
+                    !isset($productAttributes[$id][$key]['attribute_value'])
                     && !count($variantAttributeValues)
                 ) {
                     continue;
                 }
 
                 // Merge all attribute values into one array(map) and flip values with keys (convert to hash map)
-                // This used to bring faster access check for value existance.
-                // Hash key variable check is faster then traditional search.
+                // This used to bring faster access check for value existence
+                // Hash key variable check is faster then traditional search
                 $values = array_flip( // Flip Array
                     array_merge( // phpcs:ignore
                         array_filter( // explode might return array with empty value, remove such values
