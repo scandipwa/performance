@@ -44,7 +44,9 @@ class DataPostProcessor
         array $products,
         string $graphqlResolvePath,
         $graphqlResolveInfo,
-        array $processorOptions = []
+        array $processorOptions = [
+            'isSingleProduct' => false
+        ]
     ): array {
         $processorsCallbacks = array_map(function ($processor) use (
             $products,

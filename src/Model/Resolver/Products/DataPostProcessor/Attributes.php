@@ -282,6 +282,21 @@ class Attributes implements ProductsDataPostProcessorInterface
         }
     }
 
+    protected function isAttributeSkipped(
+        Attribute $attribute,
+        bool $isSingleProduct
+    ): bool {
+        if ($isSingleProduct) {
+            return !$attribute->getIsVisibleOnFront(); // skip attribute if is is not visible on FE
+        }
+
+        /**
+         * On PLP, KEEP attribute if it is used on PLP and is visible on FE.
+         * This means if not visible on PLP or is not visible we should SKIP it.
+         */
+        return !$attribute->getUsedInProductListing() || !$attribute->getIsVisibleOnFront();
+    }
+
     /**
      * @inheritDoc
      * @throws LocalizedException
@@ -296,6 +311,8 @@ class Attributes implements ProductsDataPostProcessorInterface
         $productAttributes = [];
         $attributes = [];
         $swatchAttributes = [];
+
+        $isSingleProduct = isset($processorOptions['isSingleProduct']) ? $processorOptions['isSingleProduct'] : false;
 
         $fields = $this->getFieldsFromProductInfo(
             $graphqlResolveInfo,
@@ -321,7 +338,7 @@ class Attributes implements ProductsDataPostProcessorInterface
              * @var Attribute $attribute
              */
             foreach ($product->getAttributes() as $attributeCode => $attribute) {
-                if (!$attribute->getIsVisibleOnFront()) {
+                if ($this->isAttributeSkipped($attribute, $isSingleProduct)) {
                     continue;
                 }
 
@@ -338,7 +355,6 @@ class Attributes implements ProductsDataPostProcessorInterface
                     $attributes[$attributeCode] = $attribute;
 
                     // Collect all swatches (we will need additional data for them)
-                    /** @var Attribute $attribute */
                     if ($isCollectOptions && $this->swatchHelper->isSwatchAttribute($attribute)) {
                         $swatchAttributes[] = $attributeCode;
                     }
