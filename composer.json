@@ -1,26 +1,27 @@
 {
-  "name": "scandipwa/performance",
-  "description": "N/A",
-  "type": "magento2-module",
-  "support": {
-    "email": "info@scandiweb.com"
-  },
-  "authors": [
-    {
-      "name": "Alfreds Genkins",
-      "email": "alfreds@scandiweb.com"
-    }
-  ],
-  "license": [
-    "OSL-3.0",
-    "AFL-3.0"
-  ],
-  "autoload": {
-    "files": [
-      "src/registration.php"
+    "name": "scandipwa/performance",
+    "description": "N/A",
+    "type": "magento2-module",
+    "license": [
+        "OSL-3.0"
     ],
-    "psr-4": {
-      "ScandiPWA\\Performance\\": "src/"
+    "require": {
+        "magento/framework": "*",
+        "magento/module-catalog": "*",
+        "magento/module-swatches": "*",
+        "magento/module-store": "*",
+        "magento/module-inventory-api": "*",
+        "magento/module-eav": "*",
+        "magento/module-inventory-catalog": "*",
+        "magento/module-catalog-inventory": "*",
+        "magento/module-catalog-graph-ql": "^100.3"
+    },
+    "autoload": {
+        "files": [
+            "src/registration.php"
+        ],
+        "psr-4": {
+            "ScandiPWA\\Performance\\": "src/"
+        }
     }
-  }
 }

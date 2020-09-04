@@ -1,18 +1,27 @@
 <?xml version="1.0"?>
-<!-- 
+<!--
 /**
- * @category    ScandiPWA
- * @package     ScandiPWA_Performance
- * @author      Alfreds Genkins <info@scandiweb.com>
- * @copyright   Copyright (c) 2019 Scandiweb, Ltd (https://scandiweb.com)
+ * ScandiPWA - Progressive Web App for Magento
+ *
+ * Copyright © Scandiweb, Inc. All rights reserved.
+ * See LICENSE for license details.
+ *
+ * @license OSL-3.0 (Open Software License ("OSL") v. 3.0)
+ * @link https://github.com/scandipwa/quote-graphql
  */
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
     <module name="ScandiPWA_Performance">
         <sequence>
-            <module name="Magento_CatalogGraphQl"/>
-            <module name="ScandiPWA_CatalogGraphQl"/>
+            <module name="Magento_Catalog"/>
+            <module name="Magento_Swatches"/>
+            <module name="Magento_Store"/>
+            <module name="Magento_InventoryApi"/>
+            <module name="Magento_Eav"/>
             <module name="Magento_InventoryCatalog"/>
+            <module name="Magento_CatalogInventory"/>
+            <module name="Magento_CatalogGraphQl"/>
         </sequence>
     </module>
 </config>
