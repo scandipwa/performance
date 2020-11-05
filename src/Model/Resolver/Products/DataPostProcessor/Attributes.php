@@ -286,15 +286,11 @@ class Attributes implements ProductsDataPostProcessorInterface
         Attribute $attribute,
         bool $isSingleProduct
     ): bool {
-        if ($isSingleProduct) {
-            return !$attribute->getIsVisibleOnFront(); // skip attribute if is is not visible on FE
-        }
-
         /**
-         * On PLP, KEEP attribute if it is used on PLP and is visible on FE.
-         * This means if not visible on PLP or is not visible we should SKIP it.
+         * On PLP, KEEP attribute if it is used on PLP.
+         * This means if not visible on PLP we should SKIP it.
          */
-        return !$attribute->getUsedInProductListing() || !$attribute->getIsVisibleOnFront();
+        return !$attribute->getUsedInProductListing();
     }
 
     /**
