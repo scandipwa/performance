@@ -32,7 +32,7 @@ class Attributes implements ProductsDataPostProcessorInterface
 {
     use ResolveInfoFieldsTrait;
 
-    const ATTRIBUTES = 'attributes';
+    const ATTRIBUTES = 's_attributes';
 
     /**
      * @var Data
@@ -294,7 +294,7 @@ class Attributes implements ProductsDataPostProcessorInterface
          * On PLP, KEEP attribute if it is used on PLP and is visible on FE.
          * This means if not visible on PLP or is not visible we should SKIP it.
          */
-        return !$attribute->getUsedInProductListing() || !$attribute->getIsVisibleOnFront();
+        return !$attribute->getUsedInProductListing();
     }
 
     /**
