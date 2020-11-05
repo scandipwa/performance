@@ -9,6 +9,28 @@ interface ProductInterface {
     thumbnail: OptimizedProductImage @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     only_x_left_in_stock: Float @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     stock_status: ProductStockStatus @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+    s_attributes: [AttributeWithValue]
+}
+
+type AttributeWithValue {
+    attribute_code: String
+    entity_type: String
+    attribute_type: String
+    attribute_value: String
+    attribute_label: String
+    attribute_id: Int
+    attribute_options: [AttributeWithValueOption]
+}
+
+type AttributeWithValueOption {
+    label: String
+    value: String
+    swatch_data: AttributeWithValueSwatchData
+}
+
+type AttributeWithValueSwatchData {
+    type: String
+    value: String
 }
 
 type OptimizedProductImage {

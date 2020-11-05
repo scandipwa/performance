@@ -32,7 +32,7 @@ class Attributes implements ProductsDataPostProcessorInterface
 {
     use ResolveInfoFieldsTrait;
 
-    const ATTRIBUTES = 'attributes';
+    const ATTRIBUTES = 's_attributes';
 
     /**
      * @var Data
