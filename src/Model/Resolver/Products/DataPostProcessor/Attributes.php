@@ -128,6 +128,7 @@ class Attributes implements ProductsDataPostProcessorInterface
 
                 if (!$attributeValue) {
                     // Remove all empty attributes
+                    unset($productAttributes[$productId][$attributeCode]);
                     continue;
                 }
 
@@ -290,7 +291,7 @@ class Attributes implements ProductsDataPostProcessorInterface
          * On PLP, KEEP attribute if it is used on PLP.
          * This means if not visible on PLP we should SKIP it.
          */
-        return !$attribute->getUsedInProductListing();
+        return !$attribute->getUsedInProductListing() || !$attribute->getStoreLabel();
     }
 
     /**
