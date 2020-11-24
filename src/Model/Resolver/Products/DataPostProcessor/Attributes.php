@@ -14,7 +14,6 @@ use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Catalog\Api\ProductAttributeRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
-use Magento\ConfigurableProductGraphQl\Model\Options\Collection as OptionCollection;
 use Magento\Framework\Api\ExtensibleDataInterface;
 use Magento\Framework\Api\Search\SearchCriteriaInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
@@ -56,30 +55,22 @@ class Attributes implements ProductsDataPostProcessorInterface
     protected $attributeRepository;
 
     /**
-     * @var OptionCollection
-     */
-    private $optionCollection;
-
-    /**
      * Attributes constructor.
      * @param Data $swatchHelper
      * @param CollectionFactory $productCollection
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param ProductAttributeRepositoryInterface $attributeRepositor
-     * @param OptionCollection $optionCollection
      */
     public function __construct(
         Data $swatchHelper,
         CollectionFactory $productCollection,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        ProductAttributeRepositoryInterface $attributeRepository,
-        OptionCollection $optionCollection
+        ProductAttributeRepositoryInterface $attributeRepository
     ) {
         $this->swatchHelper = $swatchHelper;
         $this->productCollection = $productCollection;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->attributeRepository = $attributeRepository;
-        $this->optionCollection = $optionCollection;
     }
 
     /**
@@ -115,14 +106,12 @@ class Attributes implements ProductsDataPostProcessorInterface
      * Append product attribute data with value, if value not found, strip the attribute from response
      * @param $attributes ProductAttributeInterface[]
      * @param $productIds array
-     * @param $whitelistedAttributes array
      * @param $productAttributes
      * @throws LocalizedException
      */
     protected function appendWithValue(
         array $attributes,
         array $productIds,
-        array $whitelistedAttributes,
         array &$productAttributes
     ): void {
         $productCollection = $this->productCollection->create()
@@ -139,7 +128,9 @@ class Attributes implements ProductsDataPostProcessorInterface
 
                 // Remove all empty attributes
                 if (!$attributeValue) {
-                    if (!in_array($attributeCode, $whitelistedAttributes[$productId])) {
+                    // If attribute does not contain both value nor options then we remove it from output
+                    if (!isset($productAttributes[$productId][$attributeCode]) ||
+                        !$productAttributes[$productId][$attributeCode]['attribute_options']) {
                         unset($productAttributes[$productId][$attributeCode]);
                     }
                     continue;
@@ -303,6 +294,9 @@ class Attributes implements ProductsDataPostProcessorInterface
         /**
          * On PLP, KEEP attribute if it is used on PLP.
          * This means if not visible on PLP we should SKIP it.
+         * 
+         * On PDP, If attribute has no label then it shouldn't be
+         * visible.
          */
         return !$attribute->getUsedInProductListing() || !$attribute->getStoreLabel();
     }
@@ -319,7 +313,6 @@ class Attributes implements ProductsDataPostProcessorInterface
     ): callable {
         $productIds = [];
         $productAttributes = [];
-        $whitelistedAttributes = [];
         $attributes = [];
         $swatchAttributes = [];
 
@@ -344,14 +337,6 @@ class Attributes implements ProductsDataPostProcessorInterface
 
             // Create storage for future attributes
             $productAttributes[$productId] = [];
-
-            // Loads white-listed attrobutes - used in config product configuration
-            $this->optionCollection->addProductId((int)$productId);
-            $configAttributes = $this->optionCollection->getAttributesByProductId((int)$productId);
-            $whitelistedAttributes[$productId] = [];
-            foreach ($configAttributes as $attribute) {
-                $whitelistedAttributes[$productId][] = $attribute['attribute_code'];
-            }
 
             /**
              * @var Attribute $attribute
@@ -381,13 +366,6 @@ class Attributes implements ProductsDataPostProcessorInterface
             }
         }
 
-        $this->appendWithValue(
-            $attributes,
-            $productIds,
-            $whitelistedAttributes,
-            $productAttributes
-        );
-
         if ($isCollectOptions) {
             $this->appendWithOptions(
                 $attributes,
@@ -396,6 +374,12 @@ class Attributes implements ProductsDataPostProcessorInterface
                 $productAttributes
             );
         }
+
+        $this->appendWithValue(
+            $attributes,
+            $productIds,
+            $productAttributes
+        );
 
         return function (&$productData) use ($productAttributes) {
             if (!isset($productData['entity_id'])) {
