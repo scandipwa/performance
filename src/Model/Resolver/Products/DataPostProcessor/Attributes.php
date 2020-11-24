@@ -59,7 +59,7 @@ class Attributes implements ProductsDataPostProcessorInterface
      * @param Data $swatchHelper
      * @param CollectionFactory $productCollection
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param ProductAttributeRepositoryInterface $attributeRepositor
+     * @param ProductAttributeRepositoryInterface $attributeRepository
      */
     public function __construct(
         Data $swatchHelper,
