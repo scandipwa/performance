@@ -126,8 +126,13 @@ class Attributes implements ProductsDataPostProcessorInterface
             foreach ($attributes as $attributeCode => $attribute) {
                 $attributeValue = $product->getData($attributeCode);
 
+                // Remove all empty attributes
                 if (!$attributeValue) {
-                    // Remove all empty attributes
+                    // If attribute does not contain both value nor options then we remove it from output
+                    if (!isset($productAttributes[$productId][$attributeCode]) ||
+                        !$productAttributes[$productId][$attributeCode]['attribute_options']) {
+                        unset($productAttributes[$productId][$attributeCode]);
+                    }
                     continue;
                 }
 
@@ -289,8 +294,11 @@ class Attributes implements ProductsDataPostProcessorInterface
         /**
          * On PLP, KEEP attribute if it is used on PLP.
          * This means if not visible on PLP we should SKIP it.
+         * 
+         * On PDP, If attribute has no label then it shouldn't be
+         * visible.
          */
-        return !$attribute->getUsedInProductListing();
+        return !$attribute->getUsedInProductListing() || !$attribute->getStoreLabel();
     }
 
     /**
@@ -358,12 +366,6 @@ class Attributes implements ProductsDataPostProcessorInterface
             }
         }
 
-        $this->appendWithValue(
-            $attributes,
-            $productIds,
-            $productAttributes
-        );
-
         if ($isCollectOptions) {
             $this->appendWithOptions(
                 $attributes,
@@ -372,6 +374,12 @@ class Attributes implements ProductsDataPostProcessorInterface
                 $productAttributes
             );
         }
+
+        $this->appendWithValue(
+            $attributes,
+            $productIds,
+            $productAttributes
+        );
 
         return function (&$productData) use ($productAttributes) {
             if (!isset($productData['entity_id'])) {
