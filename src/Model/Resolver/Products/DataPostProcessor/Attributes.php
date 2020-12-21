@@ -289,16 +289,25 @@ class Attributes implements ProductsDataPostProcessorInterface
 
     protected function isAttributeSkipped(
         Attribute $attribute,
-        bool $isSingleProduct
+        bool $isSingleProduct,
+        bool $isCompare
     ): bool {
         /**
          * On PLP, KEEP attribute if it is used on PLP.
          * This means if not visible on PLP we should SKIP it.
-         * 
+         *
          * On PDP, If attribute has no label then it shouldn't be
          * visible.
+         *
+         * Don't skip if attribute is for the compare page
          */
-        return !$attribute->getUsedInProductListing() || !$attribute->getStoreLabel();
+        $result = !$attribute->getUsedInProductListing() || !$attribute->getStoreLabel();
+
+        if ($isCompare) {
+            $result = !$attribute->getIsComparable() || !$attribute->getIsVisible();
+        }
+
+        return $result;
     }
 
     /**
@@ -317,6 +326,7 @@ class Attributes implements ProductsDataPostProcessorInterface
         $swatchAttributes = [];
 
         $isSingleProduct = isset($processorOptions['isSingleProduct']) ? $processorOptions['isSingleProduct'] : false;
+        $isCompare = isset($processorOptions['isCompare']) ? $processorOptions['isCompare'] : false;
 
         $fields = $this->getFieldsFromProductInfo(
             $graphqlResolveInfo,
@@ -342,7 +352,7 @@ class Attributes implements ProductsDataPostProcessorInterface
              * @var Attribute $attribute
              */
             foreach ($product->getAttributes() as $attributeCode => $attribute) {
-                if ($this->isAttributeSkipped($attribute, $isSingleProduct)) {
+                if ($this->isAttributeSkipped($attribute, $isSingleProduct, $isCompare)) {
                     continue;
                 }
 
