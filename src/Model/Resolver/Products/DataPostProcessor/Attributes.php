@@ -293,15 +293,20 @@ class Attributes implements ProductsDataPostProcessorInterface
         bool $isCompare
     ): bool {
         /**
+         * On PDP, If attribute is not visible on storefront
+         * or has no label then we should skip it.
+         *
          * On PLP, KEEP attribute if it is used on PLP.
          * This means if not visible on PLP we should SKIP it.
          *
-         * On PDP, If attribute has no label then it shouldn't be
-         * visible.
-         *
          * Don't skip if attribute is for the compare page
          */
-        $result = !$attribute->getUsedInProductListing() || !$attribute->getStoreLabel();
+
+        if ($isSingleProduct) {
+            return !$attribute->getIsVisibleOnFront() || !$attribute->getStoreLabel();
+        }
+
+        $result = !$attribute->getUsedInProductListing();
 
         if ($isCompare) {
             $result = !$attribute->getIsComparable() || !$attribute->getIsVisible();
