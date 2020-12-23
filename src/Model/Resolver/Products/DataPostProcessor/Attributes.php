@@ -301,7 +301,6 @@ class Attributes implements ProductsDataPostProcessorInterface
          *
          * Don't skip if attribute is for the compare page
          */
-
         if ($isSingleProduct) {
             return !$attribute->getIsVisibleOnFront() || !$attribute->getStoreLabel();
         }
