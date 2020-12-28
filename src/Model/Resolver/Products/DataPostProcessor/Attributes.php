@@ -305,13 +305,11 @@ class Attributes implements ProductsDataPostProcessorInterface
             return !$attribute->getIsVisibleOnFront() || !$attribute->getStoreLabel();
         }
 
-        $result = !$attribute->getUsedInProductListing();
-
         if ($isCompare) {
-            $result = !$attribute->getIsComparable() || !$attribute->getIsVisible();
+            return !$attribute->getIsComparable() || !$attribute->getIsVisible();
         }
 
-        return $result;
+        return !$attribute->getUsedInProductListing();
     }
 
     /**
