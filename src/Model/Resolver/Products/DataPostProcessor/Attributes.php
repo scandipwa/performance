@@ -128,11 +128,6 @@ class Attributes implements ProductsDataPostProcessorInterface
 
                 // Remove all empty attributes
                 if (!$attributeValue) {
-                    // If attribute does not contain both value nor options then we remove it from output
-                    if (!isset($productAttributes[$productId][$attributeCode]) ||
-                        !$productAttributes[$productId][$attributeCode]['attribute_options']) {
-                        unset($productAttributes[$productId][$attributeCode]);
-                    }
                     continue;
                 }
 
@@ -200,6 +195,8 @@ class Attributes implements ProductsDataPostProcessorInterface
                     !isset($productAttributes[$id][$key]['attribute_value'])
                     && !count($variantAttributeValues)
                 ) {
+                    // Remove attribute if it has no value and empty options
+                    unset($productAttributes[$id][$key]);
                     continue;
                 }
 
@@ -378,6 +375,12 @@ class Attributes implements ProductsDataPostProcessorInterface
             }
         }
 
+        $this->appendWithValue(
+            $attributes,
+            $productIds,
+            $productAttributes
+        );
+
         if ($isCollectOptions) {
             $this->appendWithOptions(
                 $attributes,
@@ -386,12 +389,6 @@ class Attributes implements ProductsDataPostProcessorInterface
                 $productAttributes
             );
         }
-
-        $this->appendWithValue(
-            $attributes,
-            $productIds,
-            $productAttributes
-        );
 
         return function (&$productData) use ($productAttributes) {
             if (!isset($productData['entity_id'])) {
