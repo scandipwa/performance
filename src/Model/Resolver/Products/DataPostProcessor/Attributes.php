@@ -272,8 +272,7 @@ class Attributes implements ProductsDataPostProcessorInterface
                     foreach ($options as $option) {
                         $value = $option->getValue();
 
-                        if (isset($swatchOptions[$value])
-                            && isset($productAttributes[$id][$key]['attribute_options'][$value])) {
+                        if (isset($swatchOptions[$value], $productAttributes[$id][$key]['attribute_options'][$value])) {
                             $productAttributes[$id][$key]['attribute_options'][$value]['swatch_data']
                                 = $swatchOptions[$value];
                         }
@@ -323,8 +322,8 @@ class Attributes implements ProductsDataPostProcessorInterface
         $attributes = [];
         $swatchAttributes = [];
 
-        $isSingleProduct = isset($processorOptions['isSingleProduct']) ? $processorOptions['isSingleProduct'] : false;
-        $isCompare = isset($processorOptions['isCompare']) ? $processorOptions['isCompare'] : false;
+        $isSingleProduct = $processorOptions['isSingleProduct'] ?? false;
+        $isCompare = $processorOptions['isCompare'] ?? false;
 
         $fields = $this->getFieldsFromProductInfo(
             $graphqlResolveInfo,

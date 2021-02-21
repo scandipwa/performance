@@ -12,13 +12,17 @@ use GraphQL\Language\AST\FieldNode;
 use Magento\Catalog\Model\Product;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 
+/**
+ * Interface ProductsDataPostProcessorInterface
+ * @package ScandiPWA\Performance\Api
+ */
 interface ProductsDataPostProcessorInterface
 {
     /**
      * @param Product[] $products
      * @param string $graphqlResolvePath
-     * @param ResolveInfo|FieldNode  $graphqlResolveInfo
-     * @param array $processorOptions
+     * @param ResolveInfo|FieldNode $graphqlResolveInfo
+     * @param array|null $processorOptions
      * @return callable
      */
     public function process(

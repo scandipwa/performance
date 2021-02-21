@@ -63,6 +63,14 @@ class Collection extends CoreCollection
         return $this->addAttributeOrAttributeEntityToSelect($attribute, $joinType);
     }
 
+    /**
+     * Add attribute to entities in collection. If $attribute=='*' select all attributes.
+     *
+     * @param array|string|integer|Element $attribute
+     * @param bool|string $joinType
+     * @return Collection
+     * @throws LocalizedException
+     */
     protected function addAttributeOrAttributeEntityToSelect($attribute, $joinType = false)
     {
         if (is_array($attribute)) {
