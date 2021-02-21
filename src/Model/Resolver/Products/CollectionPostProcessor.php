@@ -13,6 +13,10 @@ namespace ScandiPWA\Performance\Model\Resolver\Products;
 use Magento\Catalog\Model\ResourceModel\Product\Collection;
 use ScandiPWA\Performance\Api\ProductsCollectionPostProcessorInterface;
 
+/**
+ * Class CollectionPostProcessor
+ * @package ScandiPWA\Performance\Model\Resolver\Products
+ */
 class CollectionPostProcessor
 {
     /**

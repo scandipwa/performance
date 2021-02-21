@@ -10,16 +10,16 @@ declare(strict_types=1);
 
 namespace ScandiPWA\Performance\Model\Resolver\Products\CollectionPostProcessor;
 
-use GraphQL\Language\AST\FieldNode;
 use Magento\Catalog\Model\ResourceModel\Product\Collection;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use ScandiPWA\Performance\Api\ProductsCollectionPostProcessorInterface;
-use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
 
+/**
+ * Class Options
+ * @package ScandiPWA\Performance\Model\Resolver\Products\CollectionPostProcessor
+ */
 class Options implements ProductsCollectionPostProcessorInterface
 {
-    const OPTIONS_FIELD = 'options';
+    public const OPTIONS_FIELD = 'options';
 
     /**
      * @inheritDoc
@@ -28,7 +28,7 @@ class Options implements ProductsCollectionPostProcessorInterface
         Collection $collection,
         array $attributeNames
     ): Collection {
-        if (in_array(self::OPTIONS_FIELD, $attributeNames)) {
+        if (in_array(self::OPTIONS_FIELD, $attributeNames, true)) {
             $collection->addOptionsToResult();
         }
 

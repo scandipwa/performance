@@ -13,7 +13,6 @@ namespace ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor;
 use Magento\CatalogInventory\Model\Configuration;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventoryApi\Api\SourceItemRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -28,13 +27,13 @@ class Stocks implements ProductsDataPostProcessorInterface
 {
     use ResolveInfoFieldsTrait;
 
-    const ONLY_X_LEFT_IN_STOCK = 'only_x_left_in_stock';
+    public const ONLY_X_LEFT_IN_STOCK = 'only_x_left_in_stock';
 
-    const STOCK_STATUS = 'stock_status';
+    public const STOCK_STATUS = 'stock_status';
 
-    const IN_STOCK = 'IN_STOCK';
+    public const IN_STOCK = 'IN_STOCK';
 
-    const OUT_OF_STOCK = 'OUT_OF_STOCK';
+    public const OUT_OF_STOCK = 'OUT_OF_STOCK';
 
     /**
      * @var SourceItemRepositoryInterface
@@ -82,11 +81,11 @@ class Stocks implements ProductsDataPostProcessorInterface
         foreach ($node->selectionSet->selections as $selection) {
             if (!isset($selection->name)) {
                 continue;
-            };
+            }
 
             $name = $selection->name->value;
 
-            if (in_array($name, $validFields)) {
+            if (in_array($name, $validFields, true)) {
                 $stocks[] = $name;
             }
         }
@@ -111,18 +110,18 @@ class Stocks implements ProductsDataPostProcessorInterface
         );
 
         if (!count($fields)) {
-            return function (&$productData) {
+            return static function (&$productData) {
             };
         }
 
-        $productSKUs = array_map(function ($product) {
+        $productSKUs = array_map(static function ($product) {
             return $product->getSku();
         }, $products);
 
         $thresholdQty = 0;
 
-        if (in_array(self::ONLY_X_LEFT_IN_STOCK, $fields)) {
-            $thresholdQty = (float) $this->scopeConfig->getValue(
+        if (in_array(self::ONLY_X_LEFT_IN_STOCK, $fields, true)) {
+            $thresholdQty = (float)$this->scopeConfig->getValue(
                 Configuration::XML_PATH_STOCK_THRESHOLD_QTY,
                 ScopeInterface::SCOPE_STORE
             );
@@ -135,7 +134,7 @@ class Stocks implements ProductsDataPostProcessorInterface
         $stockItems = $this->stockRepository->getList($criteria)->getItems();
 
         if (!count($stockItems)) {
-            return function (&$productData) {
+            return static function (&$productData) {
             };
         }
 
@@ -167,7 +166,7 @@ class Stocks implements ProductsDataPostProcessorInterface
             }
         }
 
-        return function (&$productData) use ($productStocks) {
+        return static function (&$productData) use ($productStocks) {
             if (!isset($productData['entity_id'])) {
                 return;
             }
