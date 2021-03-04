@@ -10,6 +10,10 @@ namespace ScandiPWA\Performance\Api;
 
 use Magento\Catalog\Model\ResourceModel\Product\Collection;
 
+/**
+ * Interface ProductsCollectionPostProcessorInterface
+ * @package ScandiPWA\Performance\Api
+ */
 interface ProductsCollectionPostProcessorInterface
 {
     /**

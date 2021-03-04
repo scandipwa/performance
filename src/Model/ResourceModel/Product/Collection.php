@@ -13,6 +13,10 @@ use Magento\Eav\Model\Entity\Attribute\AttributeInterface;
 use Magento\Framework\App\Config\Element;
 use Magento\Framework\Exception\LocalizedException;
 
+/**
+ * Class Collection
+ * @package ScandiPWA\Performance\Model\ResourceModel\Product
+ */
 class Collection extends CoreCollection
 {
     /**
@@ -35,7 +39,7 @@ class Collection extends CoreCollection
                     $attributeCode = $attributeCode->getAttributeCode();
                 }
 
-                if ($attributeCode == '*') {
+                if ($attributeCode === '*') {
                     foreach ($this->getEntity()->getAllTableColumns() as $column) {
                         $this->getSelect()->columns('e.' . $column);
                         $this->_selectAttributes[$column] = $column;
@@ -59,6 +63,14 @@ class Collection extends CoreCollection
         return $this->addAttributeOrAttributeEntityToSelect($attribute, $joinType);
     }
 
+    /**
+     * Add attribute to entities in collection. If $attribute=='*' select all attributes.
+     *
+     * @param array|string|integer|Element $attribute
+     * @param bool|string $joinType
+     * @return Collection
+     * @throws LocalizedException
+     */
     protected function addAttributeOrAttributeEntityToSelect($attribute, $joinType = false)
     {
         if (is_array($attribute)) {

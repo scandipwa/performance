@@ -19,7 +19,6 @@ use Magento\Framework\Api\Search\SearchCriteriaInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Exception\LocalizedException;
 use ScandiPWA\Performance\Model\ResourceModel\Product\CollectionFactory;
-use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Swatches\Helper\Data;
 use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
 use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
@@ -34,7 +33,7 @@ class Attributes implements ProductsDataPostProcessorInterface
 {
     use ResolveInfoFieldsTrait;
 
-    const ATTRIBUTES = 's_attributes';
+    public const ATTRIBUTES = 's_attributes';
 
     /**
      * @var Data
@@ -319,14 +318,13 @@ class Attributes implements ProductsDataPostProcessorInterface
             foreach ($detailedAttributes as $attribute) {
                 $key = $attribute->getAttributeCode();
 
-                if (in_array($key, $swatchAttributes)) {
+                if (in_array($key, $swatchAttributes, true)) {
                     $options = $attribute->getOptions();
 
                     foreach ($options as $option) {
                         $value = $option->getValue();
 
-                        if (isset($swatchOptions[$value])
-                            && isset($productAttributes[$id][$key]['attribute_options'][$value])) {
+                        if (isset($swatchOptions[$value], $productAttributes[$id][$key]['attribute_options'][$value])) {
                             $productAttributes[$id][$key]['attribute_options'][$value]['swatch_data']
                                 = $swatchOptions[$value];
                         }
@@ -376,8 +374,8 @@ class Attributes implements ProductsDataPostProcessorInterface
         $attributes = [];
         $swatchAttributes = [];
 
-        $isSingleProduct = isset($processorOptions['isSingleProduct']) ? $processorOptions['isSingleProduct'] : false;
-        $isCompare = isset($processorOptions['isCompare']) ? $processorOptions['isCompare'] : false;
+        $isSingleProduct = $processorOptions['isSingleProduct'] ?? false;
+        $isCompare = $processorOptions['isCompare'] ?? false;
 
         $fields = $this->getFieldsFromProductInfo(
             $graphqlResolveInfo,
@@ -386,11 +384,11 @@ class Attributes implements ProductsDataPostProcessorInterface
 
         if (!count($fields)) {
             // Do nothing with the product
-            return function (&$productData) {
+            return static function (&$productData) {
             };
         }
 
-        $isCollectOptions = in_array('attribute_options', $fields);
+        $isCollectOptions = in_array('attribute_options', $fields, true);
 
         foreach ($products as $product) {
             $productId = $product->getId();
@@ -448,7 +446,7 @@ class Attributes implements ProductsDataPostProcessorInterface
             );
         }
 
-        return function (&$productData) use ($productAttributes) {
+        return static function (&$productData) use ($productAttributes) {
             if (!isset($productData['entity_id'])) {
                 return;
             }

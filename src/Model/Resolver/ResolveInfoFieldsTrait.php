@@ -11,6 +11,10 @@ namespace ScandiPWA\Performance\Model\Resolver;
 use GraphQL\Language\AST\FieldNode;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 
+/**
+ * Trait ResolveInfoFieldsTrait
+ * @package ScandiPWA\Performance\Model\Resolver
+ */
 trait ResolveInfoFieldsTrait
 {
     /**
@@ -26,7 +30,7 @@ trait ResolveInfoFieldsTrait
         foreach ($node->selectionSet->selections as $selection) {
             if (!isset($selection->name)) {
                 continue;
-            };
+            }
 
             $fields[] = $selection->name->value;
         }

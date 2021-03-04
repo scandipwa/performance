@@ -14,6 +14,10 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 
+/**
+ * Class Value
+ * @package ScandiPWA\Performance\Model\Resolver
+ */
 class Value implements ResolverInterface
 {
     /**

@@ -28,7 +28,7 @@ class Images implements ProductsDataPostProcessorInterface
 {
     use ResolveInfoFieldsTrait;
 
-    const IMAGE_FIELDS = ['thumbnail', 'small_image', 'image'];
+    public const IMAGE_FIELDS = ['thumbnail', 'small_image', 'image'];
 
     /**
      * @var Image
@@ -81,11 +81,11 @@ class Images implements ProductsDataPostProcessorInterface
         foreach ($node->selectionSet->selections as $selection) {
             if (!isset($selection->name)) {
                 continue;
-            };
+            }
 
             $name = $selection->name->value;
 
-            if (in_array($name, self::IMAGE_FIELDS)) {
+            if (in_array($name, self::IMAGE_FIELDS, true)) {
                 $images[] = $name;
             }
         }
@@ -111,7 +111,7 @@ class Images implements ProductsDataPostProcessorInterface
         );
 
         if (!count($fields)) {
-            return function (&$productData) {
+            return static function (&$productData) {
             };
         }
 
@@ -138,7 +138,7 @@ class Images implements ProductsDataPostProcessorInterface
 
         $this->emulation->stopEnvironmentEmulation();
 
-        return function (&$productData) use ($productImages) {
+        return static function (&$productData) use ($productImages) {
             if (!isset($productData['entity_id'])) {
                 return;
             }

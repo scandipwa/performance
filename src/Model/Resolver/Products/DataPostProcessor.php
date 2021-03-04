@@ -15,6 +15,10 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
 use Magento\Catalog\Model\Product;
 
+/**
+ * Class DataPostProcessor
+ * @package ScandiPWA\Performance\Model\Resolver\Products
+ */
 class DataPostProcessor
 {
     /**
@@ -48,7 +52,7 @@ class DataPostProcessor
             'isSingleProduct' => false
         ]
     ): array {
-        $processorsCallbacks = array_map(function ($processor) use (
+        $processorsCallbacks = array_map(static function ($processor) use (
             $products,
             $graphqlResolvePath,
             $graphqlResolveInfo,
