@@ -23,6 +23,8 @@ use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Swatches\Helper\Data;
 use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
 use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
+use Magento\Eav\Api\Data\AttributeGroupInterface;
+use Magento\Eav\Model\ResourceModel\Entity\Attribute\Group\CollectionFactory as GroupCollectionFactory;
 
 /**
  * Class Attributes
@@ -55,6 +57,11 @@ class Attributes implements ProductsDataPostProcessorInterface
     protected $attributeRepository;
 
     /**
+     * @var GroupCollectionFactory
+     */
+    protected $groupCollection;
+
+    /**
      * Attributes constructor.
      * @param Data $swatchHelper
      * @param CollectionFactory $productCollection
@@ -65,12 +72,14 @@ class Attributes implements ProductsDataPostProcessorInterface
         Data $swatchHelper,
         CollectionFactory $productCollection,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        ProductAttributeRepositoryInterface $attributeRepository
+        ProductAttributeRepositoryInterface $attributeRepository,
+        GroupCollectionFactory $groupCollection
     ) {
         $this->swatchHelper = $swatchHelper;
         $this->productCollection = $productCollection;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->attributeRepository = $attributeRepository;
+        $this->groupCollection = $groupCollection;
     }
 
     /**
@@ -133,6 +142,49 @@ class Attributes implements ProductsDataPostProcessorInterface
 
                 // Append value to existing attribute data
                 $productAttributes[$productId][$attributeCode]['attribute_value'] = $attributeValue;
+            }
+        }
+    }
+
+    /**
+     * Append product attribute data with value, if value not found, strip the attribute from response
+     * @param $attributes ProductAttributeInterface[]
+     * @param $products array
+     * @param $productAttributes
+     * @throws LocalizedException
+     */
+    protected function appendWithGroup(
+        array $attributes,
+        array $products,
+        array &$productAttributes
+    ): void {
+
+        /** @var Product $product */
+        $setIds = array_map(function ($product) {
+            return $product->getAttributeSetId();
+        }, $products);
+
+        // Retrieve all groups with used product Set Ids
+        $groupCollection = $this->groupCollection->create()
+            ->addFieldToFilter('attribute_set_id', ['in' => $setIds])
+            ->load();
+
+        foreach ($products as $product) {
+            $productId = $product->getId();
+            $setId = $product->getAttributeSetId();
+
+            /** @var Attribute $attribute */
+            foreach ($attributes as $attributeCode => $attribute) {
+
+                // Find the correct group for every attribute
+                /** @var AttributeGroupInterface $group */
+                foreach ($groupCollection as $group) {
+                    if ($attribute->isInGroup($setId, $group->getAttributeGroupId())) {
+                        $productAttributes[$productId][$attributeCode]['attribute_group_name'] = $group->getAttributeGroupName();
+                        $productAttributes[$productId][$attributeCode]['attribute_group_id'] = $group->getAttributeGroupId();
+                        $productAttributes[$productId][$attributeCode]['attribute_group_code'] = $group->getAttributeGroupCode();
+                    }
+                }
             }
         }
     }
@@ -378,6 +430,12 @@ class Attributes implements ProductsDataPostProcessorInterface
         $this->appendWithValue(
             $attributes,
             $productIds,
+            $productAttributes
+        );
+
+        $this->appendWithGroup(
+            $attributes,
+            $products,
             $productAttributes
         );
 
