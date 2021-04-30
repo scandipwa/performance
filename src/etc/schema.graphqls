@@ -23,6 +23,7 @@ type AttributeWithValue {
     attribute_group_code: String
     attribute_group_id: String
     attribute_options: [AttributeWithValueOption]
+    used_in_product_listing: Boolean
 }
 
 type AttributeWithValueOption {
