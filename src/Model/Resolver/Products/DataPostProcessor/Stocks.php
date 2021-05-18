@@ -19,6 +19,9 @@ use Magento\InventoryApi\Api\SourceItemRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
 use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
 use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
+use Magento\InventoryApi\Api\GetStockSourceLinksInterface;
+use Magento\InventoryApi\Api\Data\StockSourceLinkInterface;
+use Magento\InventoryCatalog\Model\GetStockIdForCurrentWebsite;
 
 /**
  * Class Images
@@ -52,6 +55,16 @@ class Stocks implements ProductsDataPostProcessorInterface
     protected $scopeConfig;
 
     /**
+     * @var GetStockSourceLinksInterface
+     */
+    private $getStockSourceLinks;
+
+    /**
+     * @var GetStockIdForCurrentWebsite
+     */
+    private $getStockIdForCurrentWebsite;
+
+    /**
      * Stocks constructor.
      * @param SourceItemRepositoryInterface $stockRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
@@ -60,11 +73,15 @@ class Stocks implements ProductsDataPostProcessorInterface
     public function __construct(
         SourceItemRepositoryInterface $stockRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        ScopeConfigInterface $scopeConfig
+        ScopeConfigInterface $scopeConfig,
+        GetStockSourceLinksInterface $getStockSourceLinks,
+        GetStockIdForCurrentWebsite $getStockIdForCurrentWebsite
     ) {
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->stockRepository = $stockRepository;
         $this->scopeConfig = $scopeConfig;
+        $this->getStockSourceLinks = $getStockSourceLinks;
+        $this->getStockIdForCurrentWebsite = $getStockIdForCurrentWebsite;
     }
 
     /**
@@ -115,6 +132,13 @@ class Stocks implements ProductsDataPostProcessorInterface
             };
         }
 
+        $stockId = $this->getStockIdForCurrentWebsite->execute();
+
+        if(!$stockId) {
+            return function (&$productData) {
+            };
+        }
+
         $productSKUs = array_map(function ($product) {
             return $product->getSku();
         }, $products);
@@ -129,7 +153,23 @@ class Stocks implements ProductsDataPostProcessorInterface
         }
 
         $criteria = $this->searchCriteriaBuilder
+            ->addFilter(StockSourceLinkInterface::STOCK_ID, $stockId)
+            ->create();
+
+        $sourceLinks = $this->getStockSourceLinks->execute($criteria)->getItems();
+
+        if (!count($sourceLinks)) {
+            return function (&$productData) {
+            };
+        }
+
+        $sourceCodes = array_map(function ($sourceLink) {
+            return $sourceLink->getSourceCode();
+        }, $sourceLinks);
+
+        $criteria = $this->searchCriteriaBuilder
             ->addFilter(SourceItemInterface::SKU, $productSKUs, 'in')
+            ->addFilter(SourceItemInterface::SOURCE_CODE, $sourceCodes, 'in')
             ->create();
 
         $stockItems = $this->stockRepository->getList($criteria)->getItems();
@@ -150,6 +190,11 @@ class Stocks implements ProductsDataPostProcessorInterface
             if ($thresholdQty !== (float) 0) {
                 $isThresholdPassed = $qty <= $thresholdQty;
                 $leftInStock = $isThresholdPassed ? $qty : null;
+            }
+
+            if(isset($formattedStocks[$stockItem->getSku()])
+            && $formattedStocks[$stockItem->getSku()][self::STOCK_STATUS] == self::IN_STOCK) {
+                continue;
             }
 
             $formattedStocks[$stockItem->getSku()] = [
