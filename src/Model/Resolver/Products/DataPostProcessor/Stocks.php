@@ -182,10 +182,11 @@ class Stocks implements ProductsDataPostProcessorInterface
         $formattedStocks = [];
 
         foreach ($stockItems as $stockItem) {
-            $inStock = $stockItem->getStatus() === SourceItemInterface::STATUS_IN_STOCK;
-
             $leftInStock = null;
             $qty = $stockItem->getQuantity();
+
+            $inStock = (($stockItem->getStatus() === SourceItemInterface::STATUS_IN_STOCK)
+                        and $qty > 0)? true : false;
 
             if ($thresholdQty !== (float) 0) {
                 $isThresholdPassed = $qty <= $thresholdQty;
