@@ -22,6 +22,8 @@ use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
 use Magento\InventoryApi\Api\GetStockSourceLinksInterface;
 use Magento\InventoryApi\Api\Data\StockSourceLinkInterface;
 use Magento\InventoryCatalog\Model\GetStockIdForCurrentWebsite;
+use Magento\InventorySalesApi\Api\GetProductSalableQtyInterface;
+use Magento\InventoryConfigurationApi\Api\GetStockItemConfigurationInterface;
 
 /**
  * Class Images
@@ -65,6 +67,16 @@ class Stocks implements ProductsDataPostProcessorInterface
     private $getStockIdForCurrentWebsite;
 
     /**
+     * @var GetProductSalableQtyInterface
+     */
+    private $getProductSalableQty;
+
+    /**
+     * @var GetStockItemConfigurationInterface
+     */
+    private $getStockItemConfiguration;
+
+    /**
      * Stocks constructor.
      * @param SourceItemRepositoryInterface $stockRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
@@ -75,13 +87,17 @@ class Stocks implements ProductsDataPostProcessorInterface
         SearchCriteriaBuilder $searchCriteriaBuilder,
         ScopeConfigInterface $scopeConfig,
         GetStockSourceLinksInterface $getStockSourceLinks,
-        GetStockIdForCurrentWebsite $getStockIdForCurrentWebsite
+        GetStockIdForCurrentWebsite $getStockIdForCurrentWebsite,
+        GetStockItemConfigurationInterface $getStockItemConfiguration,
+        GetProductSalableQtyInterface $getProductSalableQty
     ) {
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->stockRepository = $stockRepository;
         $this->scopeConfig = $scopeConfig;
         $this->getStockSourceLinks = $getStockSourceLinks;
         $this->getStockIdForCurrentWebsite = $getStockIdForCurrentWebsite;
+        $this->getStockItemConfiguration = $getStockItemConfiguration;
+        $this->getProductSalableQty = $getProductSalableQty;
     }
 
     /**
@@ -184,21 +200,38 @@ class Stocks implements ProductsDataPostProcessorInterface
         foreach ($stockItems as $stockItem) {
             $leftInStock = null;
             $qty = $stockItem->getQuantity();
+            $sku = $stockItem->getSku();
 
             $inStock = (($stockItem->getStatus() === SourceItemInterface::STATUS_IN_STOCK)
                         and $qty > 0)? true : false;
 
-            if ($thresholdQty !== (float) 0) {
-                $isThresholdPassed = $qty <= $thresholdQty;
-                $leftInStock = $isThresholdPassed ? $qty : null;
+            if ($inStock) {
+                $productSalableQty = $this->getProductSalableQty->execute($sku, $stockId);
+
+                if ($productSalableQty > 0) {
+                    $stockItemConfiguration = $this->getStockItemConfiguration->execute($sku, $stockId);
+                    $minQty = $stockItemConfiguration->getMinQty();
+                    if ($productSalableQty >= $minQty){
+                        $stockLeft = $productSalableQty - $minQty;
+                        $thresholdQty = $stockItemConfiguration->getStockThresholdQty();
+                        if ($thresholdQty !== 0) {
+                            $leftInStock = $stockLeft <= $thresholdQty ? (float)$stockLeft : null;
+                        }
+                    } else {
+                        $inStock = false;
+                    }
+                } else {
+                    $inStock = false;
+                }
+
             }
 
-            if(isset($formattedStocks[$stockItem->getSku()])
-            && $formattedStocks[$stockItem->getSku()][self::STOCK_STATUS] == self::IN_STOCK) {
+            if(isset($formattedStocks[$sku])
+            && $formattedStocks[$sku][self::STOCK_STATUS] == self::IN_STOCK) {
                 continue;
             }
 
-            $formattedStocks[$stockItem->getSku()] = [
+            $formattedStocks[$sku] = [
                 self::STOCK_STATUS => $inStock ? self::IN_STOCK : self::OUT_OF_STOCK,
                 self::ONLY_X_LEFT_IN_STOCK => $leftInStock
             ];
