@@ -136,7 +136,7 @@ class Attributes implements ProductsDataPostProcessorInterface
                 $attributeValue = $product->getData($attributeCode);
 
                 // Remove all empty attributes
-                if (!$attributeValue) {
+                if (!isset($attributeValue)) {
                     continue;
                 }
 
