@@ -412,7 +412,8 @@ class Attributes implements ProductsDataPostProcessorInterface
                     'attribute_type' => $attribute->getFrontendInput(),
                     'attribute_label' => $attribute->getStoreLabel(),
                     'attribute_id' => $attribute->getAttributeId(),
-                    'attribute_options' => []
+                    'attribute_options' => [],
+                    'used_in_product_listing' => $attribute->getUsedInProductListing()
                 ];
 
                 // Collect valid attributes
