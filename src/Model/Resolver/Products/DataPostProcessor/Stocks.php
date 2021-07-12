@@ -225,16 +225,17 @@ class Stocks implements ProductsDataPostProcessorInterface
                 }
 
             }
+            if (!isset($formattedStocks[$stockItem->getSku()])) {
+                $formattedStocks[$stockItem->getSku()] = [self::STOCK_STATUS => self::OUT_OF_STOCK, self::ONLY_X_LEFT_IN_STOCK => 0];
+            }
 
             if(isset($formattedStocks[$sku])
             && $formattedStocks[$sku][self::STOCK_STATUS] == self::IN_STOCK) {
                 continue;
             }
 
-            $formattedStocks[$sku] = [
-                self::STOCK_STATUS => $inStock ? self::IN_STOCK : self::OUT_OF_STOCK,
-                self::ONLY_X_LEFT_IN_STOCK => $leftInStock
-            ];
+            $formattedStocks[$stockItem->getSku()][self::STOCK_STATUS] = $formattedStocks[$stockItem->getSku()][self::STOCK_STATUS] || $inStock ? self::IN_STOCK : self::OUT_OF_STOCK;
+            $formattedStocks[$stockItem->getSku()][self::ONLY_X_LEFT_IN_STOCK] = $formattedStocks[$stockItem->getSku()][self::ONLY_X_LEFT_IN_STOCK] + $leftInStock;
         }
 
         foreach ($products as $product) {
