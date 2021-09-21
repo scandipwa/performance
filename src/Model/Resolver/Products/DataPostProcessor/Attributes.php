@@ -147,42 +147,33 @@ class Attributes implements ProductsDataPostProcessorInterface
     }
 
     /**
-     * Append product attribute data with value, if value not found, strip the attribute from response
-     * @param $attributes ProductAttributeInterface[]
-     * @param $products array
-     * @param $productAttributes
+     * Append attribute data with attribute group value per set
+     * @param ProductAttributeInterface[] $attributes
+     * @param array $attributeSetIds
+     * @param array $attributeDataBySetId
      * @throws LocalizedException
      */
     protected function appendWithGroup(
         array $attributes,
-        array $products,
-        array &$productAttributes
+        array $attributeSetIds,
+        array &$attributeDataBySetId
     ): void {
-
-        /** @var Product $product */
-        $setIds = array_map(function ($product) {
-            return $product->getAttributeSetId();
-        }, $products);
-
         // Retrieve all groups with used product Set Ids
         $groupCollection = $this->groupCollection->create()
-            ->addFieldToFilter('attribute_set_id', ['in' => $setIds])
+            ->addFieldToFilter('attribute_set_id', ['in' => $attributeSetIds])
             ->load();
 
-        foreach ($products as $product) {
-            $productId = $product->getId();
-            $setId = $product->getAttributeSetId();
-
-            /** @var Attribute $attribute */
-            foreach ($attributes as $attributeCode => $attribute) {
-
+        foreach ($attributeDataBySetId as $attributeSetId => $attributeData) {
+            foreach ($attributeData as $attributeCode => $data) {
                 // Find the correct group for every attribute
                 /** @var AttributeGroupInterface $group */
                 foreach ($groupCollection as $group) {
-                    if ($attribute->isInGroup($setId, $group->getAttributeGroupId())) {
-                        $productAttributes[$productId][$attributeCode]['attribute_group_name'] = $group->getAttributeGroupName();
-                        $productAttributes[$productId][$attributeCode]['attribute_group_id'] = $group->getAttributeGroupId();
-                        $productAttributes[$productId][$attributeCode]['attribute_group_code'] = $group->getAttributeGroupCode();
+                    if ($attributes[$attributeCode]->isInGroup($attributeSetId, $group->getAttributeGroupId())) {
+                        $attributeDataBySetId[$attributeSetId][$attributeCode]['attribute_group_name'] = $group->getAttributeGroupName();
+                        $attributeDataBySetId[$attributeSetId][$attributeCode]['attribute_group_id'] = $group->getAttributeGroupId();
+                        $attributeDataBySetId[$attributeSetId][$attributeCode]['attribute_group_code'] = $group->getAttributeGroupCode();
+
+                        break;
                     }
                 }
             }
@@ -392,22 +383,25 @@ class Attributes implements ProductsDataPostProcessorInterface
 
         $isCollectOptions = in_array('attribute_options', $fields);
 
+        $attributesBySetId = [];
+        $attributeDataBySetId = [];
+
         foreach ($products as $product) {
-            $productId = $product->getId();
-            $productIds[] = $productId;
+            if (!array_key_exists($product->getAttributeSetId(), $attributesBySetId)) {
+                $attributesBySetId[$product->getAttributeSetId()] = $product->getAttributes();
+            }
+        }
 
-            // Create storage for future attributes
-            $productAttributes[$productId] = [];
-
+        foreach ($attributesBySetId as $attributeSetId => $attributesArr) {
             /**
              * @var Attribute $attribute
              */
-            foreach ($product->getAttributes() as $attributeCode => $attribute) {
+            foreach ($attributesArr as $attributeCode => $attribute) {
                 if ($this->isAttributeSkipped($attribute, $isSingleProduct, $isCompare)) {
                     continue;
                 }
 
-                $productAttributes[$productId][$attributeCode] = [
+                $attributeDataBySetId[$attributeSetId][$attributeCode] = [
                     'attribute_code' => $attribute->getAttributeCode(),
                     'attribute_type' => $attribute->getFrontendInput(),
                     'attribute_label' => $attribute->getStoreLabel(),
@@ -428,15 +422,32 @@ class Attributes implements ProductsDataPostProcessorInterface
             }
         }
 
+        $this->appendWithGroup(
+            $attributes,
+            array_keys($attributesBySetId),
+            $attributeDataBySetId
+        );
+
+        foreach ($products as $product) {
+            $productId = $product->getId();
+            $productIds[] = $productId;
+
+            // Create storage for future attributes
+            $productAttributes[$productId] = [];
+
+            // some products may have nonexistent attribute sets with poor data integrity, skip load for these
+            if (!isset($attributeDataBySetId[$product->getAttributeSetId()])) {
+                continue;
+            }
+
+            foreach ($attributeDataBySetId[$product->getAttributeSetId()] as $attributeCode => $attributeData) {
+                $productAttributes[$productId][$attributeCode] = $attributeData;
+            }
+        }
+
         $this->appendWithValue(
             $attributes,
             $productIds,
-            $productAttributes
-        );
-
-        $this->appendWithGroup(
-            $attributes,
-            $products,
             $productAttributes
         );
 
