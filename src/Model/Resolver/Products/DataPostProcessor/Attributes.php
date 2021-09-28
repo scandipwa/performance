@@ -164,11 +164,15 @@ class Attributes implements ProductsDataPostProcessorInterface
             ->load();
 
         foreach ($attributeDataBySetId as $attributeSetId => $attributeData) {
+            $dataPath = sprintf('attribute_set_info/%s/group_id', $attributeSetId);
+
             foreach ($attributeData as $attributeCode => $data) {
+                $attributeGroupId = $attributes[$attributeCode]->getData($dataPath);
+
                 // Find the correct group for every attribute
                 /** @var AttributeGroupInterface $group */
                 foreach ($groupCollection as $group) {
-                    if ($attributes[$attributeCode]->isInGroup($attributeSetId, $group->getAttributeGroupId())) {
+                    if ($attributeGroupId ===  $group->getAttributeGroupId()) {
                         $attributeDataBySetId[$attributeSetId][$attributeCode]['attribute_group_name'] = $group->getAttributeGroupName();
                         $attributeDataBySetId[$attributeSetId][$attributeCode]['attribute_group_id'] = $group->getAttributeGroupId();
                         $attributeDataBySetId[$attributeSetId][$attributeCode]['attribute_group_code'] = $group->getAttributeGroupCode();
@@ -414,11 +418,14 @@ class Attributes implements ProductsDataPostProcessorInterface
                 if (!isset($attributes[$attributeCode])) {
                     $attributes[$attributeCode] = $attribute;
 
-                    // Collect all swatches (we will need additional data for them)
-                    if ($isCollectOptions && $this->swatchHelper->isSwatchAttribute($attribute)) {
-                        $swatchAttributes[] = $attributeCode;
-                    }
                 }
+            }
+        }
+
+        foreach ($attributes as $attributeCode => $attribute) {
+            // Collect all swatches (we will need additional data for them)
+            if ($isCollectOptions && $this->swatchHelper->isSwatchAttribute($attribute)) {
+                $swatchAttributes[] = $attributeCode;
             }
         }
 
