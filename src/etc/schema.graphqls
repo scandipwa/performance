@@ -9,6 +9,7 @@ interface ProductInterface {
     thumbnail: OptimizedProductImage @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     only_x_left_in_stock: Float @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     stock_status: ProductStockStatus @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+    salable_qty: Float @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     s_attributes: [AttributeWithValue]
 }
 
