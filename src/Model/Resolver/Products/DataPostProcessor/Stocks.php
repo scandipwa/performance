@@ -37,6 +37,8 @@ class Stocks implements ProductsDataPostProcessorInterface
 
     const STOCK_STATUS = 'stock_status';
 
+    const SALABLE_QTY = 'salable_qty';
+
     const IN_STOCK = 'IN_STOCK';
 
     const OUT_OF_STOCK = 'OUT_OF_STOCK';
@@ -199,6 +201,7 @@ class Stocks implements ProductsDataPostProcessorInterface
 
         foreach ($stockItems as $stockItem) {
             $leftInStock = null;
+            $productSalableQty = null;
             $qty = $stockItem->getQuantity();
             $sku = $stockItem->getSku();
 
@@ -233,7 +236,8 @@ class Stocks implements ProductsDataPostProcessorInterface
 
             $formattedStocks[$sku] = [
                 self::STOCK_STATUS => $inStock ? self::IN_STOCK : self::OUT_OF_STOCK,
-                self::ONLY_X_LEFT_IN_STOCK => $leftInStock
+                self::ONLY_X_LEFT_IN_STOCK => $leftInStock,
+                self::SALABLE_QTY => $productSalableQty
             ];
         }
 
