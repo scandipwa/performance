@@ -25,6 +25,8 @@ use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
 use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
 use Magento\Eav\Api\Data\AttributeGroupInterface;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Group\CollectionFactory as GroupCollectionFactory;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableProduct;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 
 /**
  * Class Attributes
@@ -62,6 +64,16 @@ class Attributes implements ProductsDataPostProcessorInterface
     protected $groupCollection;
 
     /**
+     * @var ConfigurableProduct
+     */
+    protected $configurableProduct;
+
+    /**
+     * @var ProductRepositoryInterface
+     */
+    protected $productRepositoryInterface;
+
+    /**
      * Attributes constructor.
      * @param Data $swatchHelper
      * @param CollectionFactory $productCollection
@@ -73,13 +85,17 @@ class Attributes implements ProductsDataPostProcessorInterface
         CollectionFactory $productCollection,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         ProductAttributeRepositoryInterface $attributeRepository,
-        GroupCollectionFactory $groupCollection
+        GroupCollectionFactory $groupCollection,
+        ConfigurableProduct $configurableProduct,
+        ProductRepositoryInterface $productRepositoryInterface
     ) {
         $this->swatchHelper = $swatchHelper;
         $this->productCollection = $productCollection;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->attributeRepository = $attributeRepository;
         $this->groupCollection = $groupCollection;
+        $this->configurableProduct = $configurableProduct;
+        $this->productRepositoryInterface = $productRepositoryInterface;
     }
 
     /**
@@ -138,6 +154,12 @@ class Attributes implements ProductsDataPostProcessorInterface
                 // Remove all empty attributes
                 if (!isset($attributeValue)) {
                     continue;
+                }
+
+                // set name attribute to configurable product name if the given product is the simple product
+                if (($attributeCode === "name") && ($product->getTypeId() === "simple")) {
+                    $parentId = $this->configurableProduct->getParentIdsByChild($productId)[0];
+                    $attributeValue = $this->productRepositoryInterface->getById($parentId)->getName();
                 }
 
                 // Append value to existing attribute data
