@@ -167,6 +167,7 @@ class PriceRange implements ProductsDataPostProcessorInterface
             $defaultRegularPrice, $defaultFinalPrice, $defaultFinalPriceExclTax, $discount, $store
         );
         $minPriceArray['model'] = $product;
+
         return $minPriceArray;
     }
 
@@ -200,6 +201,7 @@ class PriceRange implements ProductsDataPostProcessorInterface
             $defaultRegularPrice, $defaultFinalPrice, $defaultFinalPriceExclTax, $discount, $store
         );
         $maxPriceArray['model'] = $product;
+
         return $maxPriceArray;
     }
 
@@ -220,13 +222,13 @@ class PriceRange implements ProductsDataPostProcessorInterface
                 'defaultFinalPriceExclTax' => $priceInfo->getPrice(FinalPrice::PRICE_CODE)->getAmount()->getBaseAmount(),
                 'discount' => $this->calculateDiscount($product, $defaultRegularPrice, $defaultFinalPrice)
             ];
-        } else {
-            return [
-                'defaultRegularPrice' => $this->taxHelper->getTaxPrice($product, $product->getPrice(), $this->isPriceIncludesTax()),
-                'defaultFinalPrice' => round($priceProvider->getRegularPrice($product)->getValue(), 2),
-                'defaultFinalPriceExclTax' => $priceProvider->getRegularPrice($product)->getBaseAmount()
-            ];
         }
+
+        return [
+            'defaultRegularPrice' => $this->taxHelper->getTaxPrice($product, $product->getPrice(), $this->isPriceIncludesTax()),
+            'defaultFinalPrice' => round($priceProvider->getRegularPrice($product)->getValue(), 2),
+            'defaultFinalPriceExclTax' => $priceProvider->getRegularPrice($product)->getBaseAmount()
+        ];
     }
 
     /**
