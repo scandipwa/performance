@@ -426,7 +426,7 @@ class PriceRange implements ProductsDataPostProcessorInterface
             }
 
             foreach ($productPrices[$productId] as $priceType => $priceData) {
-                $productData[$priceType] = $priceData;
+                $productData[self::PRICE_RANGE_FIELD][$priceType] = $priceData;
             }
         };
     }

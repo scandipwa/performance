@@ -11,7 +11,7 @@ interface ProductInterface {
     stock_status: ProductStockStatus @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     salable_qty: Float @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     s_attributes: [AttributeWithValue]
-    s_price_range: PriceRange! @resolver(class: "Magento\\CatalogGraphQl\\Model\\Resolver\\Product\\PriceRange")
+    s_price_range: PriceRange! @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
 }
 
 type AttributeWithValue {
