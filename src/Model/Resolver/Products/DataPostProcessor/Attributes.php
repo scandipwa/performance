@@ -15,7 +15,6 @@ use Magento\Catalog\Api\ProductAttributeRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
 use Magento\Framework\Api\ExtensibleDataInterface;
-use Magento\Framework\Api\Search\SearchCriteriaInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Exception\LocalizedException;
 use ScandiPWA\Performance\Model\ResourceModel\Product\CollectionFactory;
@@ -171,7 +170,7 @@ class Attributes implements ProductsDataPostProcessorInterface
                 // Find the correct group for every attribute
                 /** @var AttributeGroupInterface $group */
                 foreach ($groupCollection as $group) {
-                    if ($attributeGroupId ===  $group->getAttributeGroupId()) {
+                    if ($attributeGroupId === $group->getAttributeGroupId()) {
                         $attributeDataBySetId[$attributeSetId][$attributeCode]['attribute_group_name'] = $group->getAttributeGroupName();
                         $attributeDataBySetId[$attributeSetId][$attributeCode]['attribute_group_id'] = $group->getAttributeGroupId();
                         $attributeDataBySetId[$attributeSetId][$attributeCode]['attribute_group_code'] = $group->getAttributeGroupCode();
@@ -189,38 +188,35 @@ class Attributes implements ProductsDataPostProcessorInterface
      * @param $attributes ProductAttributeInterface[]
      * @param $products ExtensibleDataInterface[]
      * @param $productAttributes array
-     * @param $swatchAttributes array
      */
     protected function appendWithOptions(
         array $attributes,
         array $products,
         array &$productAttributes
     ): void {
-        $attributeCodes = array_keys($attributes);
-        $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('main_table.attribute_code', $attributeCodes, 'in')
-            ->create();
-
-        /** @var SearchCriteriaInterface $searchCriteria */
-        $attributeRepository = $this->attributeRepository->getList($searchCriteria);
-        $detailedAttributes = $attributeRepository->getItems();
-
         // To collect ids of options, to later load swatch data
         $optionIds = [];
         $formattedAttributes = [];
         $swatchAttributes = [];
 
         // Format attribute to use them later
-        foreach($detailedAttributes as $attribute) {
-            $formattedAttributes[] = [
+        foreach ($attributes as $attributeCode => $attribute) {
+            $options = $attribute->getOptions();
+
+            if (!$options) {
+                continue;
+            }
+
+            // Remove first option from array since it is empty
+            array_shift($options);
+
+            $formattedAttributes[$attributeCode] = [
                 'attribute_id' => $attribute->getAttributeId(),
-                'attribute_code' => $attribute->getAttributeCode(),
-                'attribute_options' => $attribute->getOptions()
+                'attribute_options' => $options
             ];
         }
 
-        foreach ($formattedAttributes as $attribute) {
-            $attributeCode = $attribute['attribute_code'];
+        foreach ($formattedAttributes as $attributeCode => $attribute) {
             $attributeId = $attribute['attribute_id'];
 
             foreach ($products as $product) {
@@ -321,9 +317,7 @@ class Attributes implements ProductsDataPostProcessorInterface
         foreach ($products as $product) {
             $id = $product->getId();
 
-            foreach ($formattedAttributes as $attribute) {
-                $attributeCode = $attribute['attribute_code'];
-
+            foreach ($formattedAttributes as $attributeCode => $attribute) {
                 if (in_array($attributeCode, $swatchAttributes)) {
                     foreach ($attribute['attribute_options'] as $option) {
                         $value = $option->getValue();
