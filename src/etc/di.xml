@@ -16,6 +16,7 @@
                 <item name="attributes" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor\Attributes</item>
                 <item name="images" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor\Images</item>
                 <item name="stocks" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor\Stocks</item>
+                <item name="price_range" xsi:type="object">ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor\PriceRange</item>
             </argument>
         </arguments>
     </type>
@@ -28,6 +29,6 @@
         </arguments>
     </type>
     <preference
-            for="Magento\InventoryCatalog\Plugin\CatalogInventory\Model\ResourceModel\Stock\Status\AdaptAddIsInStockFilterToCollectionPlugin"
-            type="ScandiPWA\Performance\Plugin\CatalogInventory\Model\ResourceModel\Stock\Status\AdaptAddIsInStockFilterToCollectionPlugin"/>
+        for="Magento\InventoryCatalog\Plugin\CatalogInventory\Model\ResourceModel\Stock\Status\AdaptAddIsInStockFilterToCollectionPlugin"
+        type="ScandiPWA\Performance\Plugin\CatalogInventory\Model\ResourceModel\Stock\Status\AdaptAddIsInStockFilterToCollectionPlugin"/>
 </config>

@@ -13,7 +13,6 @@ namespace ScandiPWA\Performance\Model\Resolver\Products\DataPostProcessor;
 use Magento\CatalogInventory\Model\Configuration;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventoryApi\Api\SourceItemRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;

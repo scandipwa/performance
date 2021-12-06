@@ -19,7 +19,6 @@ use Magento\Framework\Api\Search\SearchCriteriaInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Exception\LocalizedException;
 use ScandiPWA\Performance\Model\ResourceModel\Product\CollectionFactory;
-use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Swatches\Helper\Data;
 use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
 use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
@@ -195,7 +194,6 @@ class Attributes implements ProductsDataPostProcessorInterface
     protected function appendWithOptions(
         array $attributes,
         array $products,
-        array $swatchAttributes,
         array &$productAttributes
     ): void {
         $attributeCodes = array_keys($attributes);
@@ -209,41 +207,44 @@ class Attributes implements ProductsDataPostProcessorInterface
 
         // To collect ids of options, to later load swatch data
         $optionIds = [];
+        $formattedAttributes = [];
+        $swatchAttributes = [];
 
-        // Loop again, get options sorted in the right places
-        /** @var Product $product */
-        foreach ($products as $product) {
-            $id = $product->getId();
+        // Format attribute to use them later
+        foreach($detailedAttributes as $attribute) {
+            $formattedAttributes[] = [
+                'attribute_id' => $attribute->getAttributeId(),
+                'attribute_code' => $attribute->getAttributeCode(),
+                'attribute_options' => $attribute->getOptions()
+            ];
+        }
 
-            $configuration = $product->getTypeId() === 'configurable'
-                ? $product->getTypeInstance()->getConfigurableOptions($product)
-                : [];
+        foreach ($formattedAttributes as $attribute) {
+            $attributeCode = $attribute['attribute_code'];
+            $attributeId = $attribute['attribute_id'];
 
-            foreach ($detailedAttributes as $attribute) {
-                $key = $attribute->getAttributeCode();
+            foreach ($products as $product) {
+                $productId = $product->getId();
+                $configuration = $product->getTypeId() === 'configurable' ?
+                    $product->getTypeInstance()->getConfigurableOptions($product)
+                    : [];
 
-                if (!isset($productAttributes[$id][$key])) {
+                if (!isset($productAttributes[$productId][$attributeCode])) {
                     continue;
                 }
 
-                $productAttributes[$id][$key]['attribute_options'] = [];
-                $variantAttributeValues = [];
+                $productAttributeVariants = $configuration[$attributeId] ?? [];
 
-                if ($product->getTypeId() === 'configurable') {
-                    $attributeId = $attribute->getAttributeId();
-                    $productAttributeVariants = $configuration[$attributeId] ?? [];
-
-                    $variantAttributeValues = array_filter(
-                        array_column($productAttributeVariants, 'value_index')
-                    );
-                }
+                $variantAttributeValues = array_filter(
+                    array_column($productAttributeVariants, 'value_index')
+                );
 
                 if (
-                    !isset($productAttributes[$id][$key]['attribute_value'])
+                    !isset($productAttributes[$productId][$attributeCode]['attribute_value'])
                     && !count($variantAttributeValues)
                 ) {
                     // Remove attribute if it has no value and empty options
-                    unset($productAttributes[$id][$key]);
+                    unset($productAttributes[$productId][$attributeCode]);
                     continue;
                 }
 
@@ -253,17 +254,15 @@ class Attributes implements ProductsDataPostProcessorInterface
                 $values = array_flip( // Flip Array
                     array_merge( // phpcs:ignore
                         array_filter( // explode might return array with empty value, remove such values
-                            explode(',', $productAttributes[$id][$key]['attribute_value'] ?? '')
+                            explode(',', $productAttributes[$productId][$attributeCode]['attribute_value'] ?? '')
                         ),
                         $variantAttributeValues
                     )
                 );
 
-                $options = $attribute->getOptions();
-                array_shift($options);
-                $productAttributes[$id][$key]['attribute_options'] = [];
+                $productAttributes[$productId][$attributeCode]['attribute_options'] = [];
 
-                foreach ($options as $option) {
+                foreach ($attribute['attribute_options'] as $option) {
                     $value = $option->getValue();
 
                     if (!isset($values[$value])) {
@@ -271,11 +270,18 @@ class Attributes implements ProductsDataPostProcessorInterface
                     }
 
                     $optionIds[] = $value;
-                    $productAttributes[$id][$key]['attribute_options'][$value] = [
+                    $productAttributes[$productId][$attributeCode]['attribute_options'][$value] = [
                         'value' => $value,
                         'label' => $option->getLabel()
                     ];
                 }
+            }
+        }
+
+        foreach ($attributes as $attributeCode => $attribute) {
+            // Collect all swatches (we will need additional data for them)
+            if ($this->swatchHelper->isSwatchAttribute($attribute)) {
+                $swatchAttributes[] = $attributeCode;
             }
         }
 
@@ -284,7 +290,7 @@ class Attributes implements ProductsDataPostProcessorInterface
                 $swatchAttributes,
                 $optionIds,
                 $products,
-                $detailedAttributes,
+                $formattedAttributes,
                 $productAttributes
             );
         }
@@ -294,35 +300,37 @@ class Attributes implements ProductsDataPostProcessorInterface
      * @param array $swatchAttributes
      * @param array $optionIds
      * @param array $products
-     * @param array $detailedAttributes
+     * @param array $formattedAttributes
      * @param array $productAttributes
      */
     protected function appendWithSwatchOptions(
         array $swatchAttributes,
         array $optionIds,
         array $products,
-        array $detailedAttributes,
-        &$productAttributes
+        array $formattedAttributes,
+        array &$productAttributes
     ) {
         array_unique($optionIds);
         $swatchOptions = $this->swatchHelper->getSwatchesByOptionsId($optionIds);
+
+        if (empty($swatchOptions)) {
+            return;
+        }
 
         /** @var Product $product */
         foreach ($products as $product) {
             $id = $product->getId();
 
-            foreach ($detailedAttributes as $attribute) {
-                $key = $attribute->getAttributeCode();
+            foreach ($formattedAttributes as $attribute) {
+                $attributeCode = $attribute['attribute_code'];
 
-                if (in_array($key, $swatchAttributes)) {
-                    $options = $attribute->getOptions();
-
-                    foreach ($options as $option) {
+                if (in_array($attributeCode, $swatchAttributes)) {
+                    foreach ($attribute['attribute_options'] as $option) {
                         $value = $option->getValue();
 
                         if (isset($swatchOptions[$value])
-                            && isset($productAttributes[$id][$key]['attribute_options'][$value])) {
-                            $productAttributes[$id][$key]['attribute_options'][$value]['swatch_data']
+                            && isset($productAttributes[$id][$attributeCode]['attribute_options'][$value])) {
+                            $productAttributes[$id][$attributeCode]['attribute_options'][$value]['swatch_data']
                                 = $swatchOptions[$value];
                         }
                     }
@@ -369,7 +377,6 @@ class Attributes implements ProductsDataPostProcessorInterface
         $productIds = [];
         $productAttributes = [];
         $attributes = [];
-        $swatchAttributes = [];
 
         $isSingleProduct = isset($processorOptions['isSingleProduct']) ? $processorOptions['isSingleProduct'] : false;
         $isCompare = isset($processorOptions['isCompare']) ? $processorOptions['isCompare'] : false;
@@ -417,15 +424,7 @@ class Attributes implements ProductsDataPostProcessorInterface
                 // Collect valid attributes
                 if (!isset($attributes[$attributeCode])) {
                     $attributes[$attributeCode] = $attribute;
-
                 }
-            }
-        }
-
-        foreach ($attributes as $attributeCode => $attribute) {
-            // Collect all swatches (we will need additional data for them)
-            if ($isCollectOptions && $this->swatchHelper->isSwatchAttribute($attribute)) {
-                $swatchAttributes[] = $attributeCode;
             }
         }
 
@@ -462,7 +461,6 @@ class Attributes implements ProductsDataPostProcessorInterface
             $this->appendWithOptions(
                 $attributes,
                 $products,
-                $swatchAttributes,
                 $productAttributes
             );
         }
