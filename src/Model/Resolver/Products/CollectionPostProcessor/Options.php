@@ -28,8 +28,6 @@ class Options implements ProductsCollectionPostProcessorInterface
             $collection->addOptionsToResult();
         }
 
-        $collection->addPriceData();
-
         return $collection;
     }
 }
