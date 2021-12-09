@@ -10,12 +10,8 @@ declare(strict_types=1);
 
 namespace ScandiPWA\Performance\Model\Resolver\Products\CollectionPostProcessor;
 
-use GraphQL\Language\AST\FieldNode;
 use Magento\Catalog\Model\ResourceModel\Product\Collection;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use ScandiPWA\Performance\Api\ProductsCollectionPostProcessorInterface;
-use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
 
 class Options implements ProductsCollectionPostProcessorInterface
 {

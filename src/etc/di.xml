@@ -28,6 +28,6 @@
         </arguments>
     </type>
     <preference
-            for="Magento\InventoryCatalog\Plugin\CatalogInventory\Model\ResourceModel\Stock\Status\AdaptAddIsInStockFilterToCollectionPlugin"
-            type="ScandiPWA\Performance\Plugin\CatalogInventory\Model\ResourceModel\Stock\Status\AdaptAddIsInStockFilterToCollectionPlugin"/>
+        for="Magento\InventoryCatalog\Plugin\CatalogInventory\Model\ResourceModel\Stock\Status\AdaptAddIsInStockFilterToCollectionPlugin"
+        type="ScandiPWA\Performance\Plugin\CatalogInventory\Model\ResourceModel\Stock\Status\AdaptAddIsInStockFilterToCollectionPlugin"/>
 </config>
