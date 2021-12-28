@@ -68,6 +68,11 @@ class Attributes implements ProductsDataPostProcessorInterface
     protected $resourceConnection;
 
     /**
+     * @var array
+     */
+    protected $configurableAttributeIds = [];
+
+    /**
      * Attributes constructor.
      * @param Data $swatchHelper
      * @param CollectionFactory $productCollection
@@ -346,8 +351,6 @@ class Attributes implements ProductsDataPostProcessorInterface
      * This function collects attribute ids
      * from catalog_product_super_attribute table
      * to get which is used for configurable products
-     *
-     * @return array
      */
     public function getConfigurableAttributeIds()
     {
@@ -359,14 +362,13 @@ class Attributes implements ProductsDataPostProcessorInterface
             'attribute_id'
         )->distinct(true);
 
-        return $connection->fetchCol($select);
+        $this->configurableAttributeIds = $connection->fetchCol($select);
     }
 
     protected function isAttributeSkipped(
         Attribute $attribute,
         bool $isSingleProduct,
-        bool $isCompare,
-        array $configurableAttributeIds
+        bool $isCompare
     ): bool {
         /**
          * If attribute is in configurable attribute pool, we need to
@@ -381,7 +383,7 @@ class Attributes implements ProductsDataPostProcessorInterface
          *
          * Don't skip if attribute is for the compare page
          */
-        if (in_array($attribute->getId(), $configurableAttributeIds)) {
+        if (in_array($attribute->getId(), $this->configurableAttributeIds)) {
             return false;
         }
 
@@ -428,7 +430,10 @@ class Attributes implements ProductsDataPostProcessorInterface
 
         $attributesBySetId = [];
         $attributeDataBySetId = [];
-        $configurableAttributeIds = $this->getConfigurableAttributeIds();
+
+        if (empty($this->configurableAttributeIds)) {
+            $this->getConfigurableAttributeIds();
+        }
 
         foreach ($products as $product) {
             if (!array_key_exists($product->getAttributeSetId(), $attributesBySetId)) {
@@ -441,7 +446,7 @@ class Attributes implements ProductsDataPostProcessorInterface
              * @var Attribute $attribute
              */
             foreach ($attributesArr as $attributeCode => $attribute) {
-                if ($this->isAttributeSkipped($attribute, $isSingleProduct, $isCompare, $configurableAttributeIds)) {
+                if ($this->isAttributeSkipped($attribute, $isSingleProduct, $isCompare)) {
                     continue;
                 }
 
