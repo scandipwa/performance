@@ -14,8 +14,10 @@ use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Catalog\Api\ProductAttributeRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
+use Magento\Framework\Api\AttributeInterface;
 use Magento\Framework\Api\ExtensibleDataInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\LocalizedException;
 use ScandiPWA\Performance\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Swatches\Helper\Data;
@@ -23,6 +25,7 @@ use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
 use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
 use Magento\Eav\Api\Data\AttributeGroupInterface;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Group\CollectionFactory as GroupCollectionFactory;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableType;
 
 /**
  * Class Attributes
@@ -60,6 +63,11 @@ class Attributes implements ProductsDataPostProcessorInterface
     protected $groupCollection;
 
     /**
+     * @var ResourceConnection
+     */
+    protected $resourceConnection;
+
+    /**
      * Attributes constructor.
      * @param Data $swatchHelper
      * @param CollectionFactory $productCollection
@@ -71,13 +79,15 @@ class Attributes implements ProductsDataPostProcessorInterface
         CollectionFactory $productCollection,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         ProductAttributeRepositoryInterface $attributeRepository,
-        GroupCollectionFactory $groupCollection
+        GroupCollectionFactory $groupCollection,
+        ResourceConnection $resourceConnection
     ) {
         $this->swatchHelper = $swatchHelper;
         $this->productCollection = $productCollection;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->attributeRepository = $attributeRepository;
         $this->groupCollection = $groupCollection;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -221,7 +231,7 @@ class Attributes implements ProductsDataPostProcessorInterface
 
             foreach ($products as $product) {
                 $productId = $product->getId();
-                $configuration = $product->getTypeId() === 'configurable' ?
+                $configuration = $product->getTypeId() === ConfigurableType::TYPE_CODE ?
                     $product->getTypeInstance()->getConfigurableOptions($product)
                     : [];
 
@@ -235,8 +245,7 @@ class Attributes implements ProductsDataPostProcessorInterface
                     array_column($productAttributeVariants, 'value_index')
                 );
 
-                if (
-                    !isset($productAttributes[$productId][$attributeCode]['attribute_value'])
+                if (!isset($productAttributes[$productId][$attributeCode]['attribute_value'])
                     && !count($variantAttributeValues)
                 ) {
                     // Remove attribute if it has no value and empty options
@@ -333,12 +342,37 @@ class Attributes implements ProductsDataPostProcessorInterface
         }
     }
 
+    /**
+     * This function collects attribute ids
+     * from catalog_product_super_attribute table
+     * to get which is used for configurable products
+     *
+     * @return array
+     */
+    public function getConfigurableAttributeIds()
+    {
+        $connection = $this->resourceConnection->getConnection();
+        $select = $connection->select();
+
+        $select->from(
+            $connection->getTableName('catalog_product_super_attribute'),
+            'attribute_id'
+        )->distinct(true);
+
+        return $connection->fetchCol($select);
+    }
+
     protected function isAttributeSkipped(
         Attribute $attribute,
         bool $isSingleProduct,
-        bool $isCompare
+        bool $isCompare,
+        array $configurableAttributeIds
     ): bool {
         /**
+         * If attribute is in configurable attribute pool, we need to
+         * pass it, so on frontend it will always present as an option
+         * for config products.
+         *
          * On PDP, If attribute is not visible on storefront
          * or has no label then we should skip it.
          *
@@ -347,6 +381,10 @@ class Attributes implements ProductsDataPostProcessorInterface
          *
          * Don't skip if attribute is for the compare page
          */
+        if (in_array($attribute->getId(), $configurableAttributeIds)) {
+            return false;
+        }
+
         if ($isSingleProduct) {
             return !$attribute->getIsVisibleOnFront() || !$attribute->getStoreLabel();
         }
@@ -390,6 +428,7 @@ class Attributes implements ProductsDataPostProcessorInterface
 
         $attributesBySetId = [];
         $attributeDataBySetId = [];
+        $configurableAttributeIds = $this->getConfigurableAttributeIds();
 
         foreach ($products as $product) {
             if (!array_key_exists($product->getAttributeSetId(), $attributesBySetId)) {
@@ -402,7 +441,7 @@ class Attributes implements ProductsDataPostProcessorInterface
              * @var Attribute $attribute
              */
             foreach ($attributesArr as $attributeCode => $attribute) {
-                if ($this->isAttributeSkipped($attribute, $isSingleProduct, $isCompare)) {
+                if ($this->isAttributeSkipped($attribute, $isSingleProduct, $isCompare, $configurableAttributeIds)) {
                     continue;
                 }
 
