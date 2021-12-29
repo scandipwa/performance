@@ -15,6 +15,7 @@ use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventoryApi\Api\SourceItemRepositoryInterface;
+use Magento\InventoryConfigurationApi\Model\IsSourceItemManagementAllowedForProductTypeInterface;
 use Magento\Store\Model\ScopeInterface;
 use ScandiPWA\Performance\Api\ProductsDataPostProcessorInterface;
 use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
@@ -60,22 +61,27 @@ class Stocks implements ProductsDataPostProcessorInterface
     /**
      * @var GetStockSourceLinksInterface
      */
-    private $getStockSourceLinks;
+    protected $getStockSourceLinks;
 
     /**
      * @var GetStockIdForCurrentWebsite
      */
-    private $getStockIdForCurrentWebsite;
+    protected $getStockIdForCurrentWebsite;
 
     /**
      * @var GetProductSalableQtyInterface
      */
-    private $getProductSalableQty;
+    protected $getProductSalableQty;
 
     /**
      * @var GetStockItemConfigurationInterface
      */
-    private $getStockItemConfiguration;
+    protected $getStockItemConfiguration;
+
+    /**
+     * @var IsSourceItemManagementAllowedForProductTypeInterface
+     */
+    protected $isSourceItemManagementAllowedForProductType;
 
     /**
      * Stocks constructor.
@@ -90,7 +96,8 @@ class Stocks implements ProductsDataPostProcessorInterface
         GetStockSourceLinksInterface $getStockSourceLinks,
         GetStockIdForCurrentWebsite $getStockIdForCurrentWebsite,
         GetStockItemConfigurationInterface $getStockItemConfiguration,
-        GetProductSalableQtyInterface $getProductSalableQty
+        GetProductSalableQtyInterface $getProductSalableQty,
+        IsSourceItemManagementAllowedForProductTypeInterface $isSourceItemManagementAllowedForProductType
     ) {
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->stockRepository = $stockRepository;
@@ -99,6 +106,7 @@ class Stocks implements ProductsDataPostProcessorInterface
         $this->getStockIdForCurrentWebsite = $getStockIdForCurrentWebsite;
         $this->getStockItemConfiguration = $getStockItemConfiguration;
         $this->getProductSalableQty = $getProductSalableQty;
+        $this->isSourceItemManagementAllowedForProductType = $isSourceItemManagementAllowedForProductType;
     }
 
     /**
@@ -138,6 +146,7 @@ class Stocks implements ProductsDataPostProcessorInterface
         ?array $processorOptions = []
     ): callable {
         $productStocks = [];
+        $productTypes = [];
 
         $fields = $this->getFieldsFromProductInfo(
             $graphqlResolveInfo,
@@ -151,14 +160,16 @@ class Stocks implements ProductsDataPostProcessorInterface
 
         $stockId = $this->getStockIdForCurrentWebsite->execute();
 
-        if(!$stockId) {
+        if (!$stockId) {
             return function (&$productData) {
             };
         }
 
-        $productSKUs = array_map(function ($product) {
-            return $product->getSku();
-        }, $products);
+        foreach ($products as $product) {
+            $productTypes[$product->getSku()] = $product->getTypeId();
+        }
+
+        $productSKUs = array_keys($productTypes);
 
         $thresholdQty = 0;
 
@@ -204,8 +215,17 @@ class Stocks implements ProductsDataPostProcessorInterface
             $qty = $stockItem->getQuantity();
             $sku = $stockItem->getSku();
 
-            $inStock = (($stockItem->getStatus() === SourceItemInterface::STATUS_IN_STOCK)
-                        and $qty > 0)? true : false;
+            $inStock = $stockItem->getStatus() === SourceItemInterface::STATUS_IN_STOCK;
+
+            if (!$this->isSourceItemManagementAllowedForProductType->execute($productTypes[$sku])) {
+                $formattedStocks[$sku] = [
+                    self::STOCK_STATUS => $inStock ? self::IN_STOCK : self::OUT_OF_STOCK,
+                ];
+
+                continue;
+            }
+
+            $inStock = $qty > 0;
 
             if ($inStock) {
                 $productSalableQty = $this->getProductSalableQty->execute($sku, $stockId);
@@ -213,10 +233,12 @@ class Stocks implements ProductsDataPostProcessorInterface
                 if ($productSalableQty > 0) {
                     $stockItemConfiguration = $this->getStockItemConfiguration->execute($sku, $stockId);
                     $minQty = $stockItemConfiguration->getMinQty();
-                    if ($productSalableQty >= $minQty){
+
+                    if ($productSalableQty >= $minQty) {
                         $stockLeft = $productSalableQty - $minQty;
                         $thresholdQty = $stockItemConfiguration->getStockThresholdQty();
-                        if ($thresholdQty !== 0) {
+
+                        if ($thresholdQty != 0) {
                             $leftInStock = $stockLeft <= $thresholdQty ? (float)$stockLeft : null;
                         }
                     } else {
@@ -228,7 +250,7 @@ class Stocks implements ProductsDataPostProcessorInterface
 
             }
 
-            if(isset($formattedStocks[$sku])
+            if (isset($formattedStocks[$sku])
             && $formattedStocks[$sku][self::STOCK_STATUS] == self::IN_STOCK) {
                 continue;
             }
