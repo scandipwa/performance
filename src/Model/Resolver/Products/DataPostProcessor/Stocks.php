@@ -217,7 +217,9 @@ class Stocks implements ProductsDataPostProcessorInterface
 
             $inStock = $stockItem->getStatus() === SourceItemInterface::STATUS_IN_STOCK;
 
-            if (!$this->isSourceItemManagementAllowedForProductType->execute($productTypes[$sku])) {
+            if (isset($productTypes[$sku])
+                && !$this->isSourceItemManagementAllowedForProductType->execute($productTypes[$sku])
+            ) {
                 $formattedStocks[$sku] = [
                     self::STOCK_STATUS => $inStock ? self::IN_STOCK : self::OUT_OF_STOCK,
                 ];
