@@ -418,7 +418,7 @@ class Attributes implements ProductsDataPostProcessorInterface
 
         $isSingleProduct = isset($processorOptions['isSingleProduct']) ? $processorOptions['isSingleProduct'] : false;
         $isCompare = isset($processorOptions['isCompare']) ? $processorOptions['isCompare'] : false;
-        $isCartProduct = isset($processorOptions['isCartProduct']) ? $processorOptions['isCartProduct'] : true;
+        $isCartProduct = isset($processorOptions['isCartProduct']) ? $processorOptions['isCartProduct'] : false;
 
         $fields = $this->getFieldsFromProductInfo(
             $graphqlResolveInfo,
