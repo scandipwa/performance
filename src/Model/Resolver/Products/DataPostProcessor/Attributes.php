@@ -385,8 +385,8 @@ class Attributes implements ProductsDataPostProcessorInterface
          * Don't skip if attribute is for the compare page
          */
         if (in_array($attribute->getId(), $this->configurableAttributeIds)) {
-            if(!$attribute->getUsedInProductListing() && !$isSingleProduct && !$isCartProduct){
-                    return true;
+            if(!$attribute->getUsedInProductListing() && !$isSingleProduct && !$isCartProduct) {
+                return true;
             }
             return false;
         }
