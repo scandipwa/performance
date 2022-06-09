@@ -368,7 +368,8 @@ class Attributes implements ProductsDataPostProcessorInterface
     protected function isAttributeSkipped(
         Attribute $attribute,
         bool $isSingleProduct,
-        bool $isCompare
+        bool $isCompare,
+        bool $isCartProduct
     ): bool {
         /**
          * If attribute is in configurable attribute pool, we need to
@@ -384,6 +385,9 @@ class Attributes implements ProductsDataPostProcessorInterface
          * Don't skip if attribute is for the compare page
          */
         if (in_array($attribute->getId(), $this->configurableAttributeIds)) {
+            if(!$attribute->getUsedInProductListing() && !$isSingleProduct && !$isCartProduct) {
+                return true;
+            }
             return false;
         }
 
@@ -414,6 +418,7 @@ class Attributes implements ProductsDataPostProcessorInterface
 
         $isSingleProduct = isset($processorOptions['isSingleProduct']) ? $processorOptions['isSingleProduct'] : false;
         $isCompare = isset($processorOptions['isCompare']) ? $processorOptions['isCompare'] : false;
+        $isCartProduct = isset($processorOptions['isCartProduct']) ? $processorOptions['isCartProduct'] : false;
 
         $fields = $this->getFieldsFromProductInfo(
             $graphqlResolveInfo,
@@ -446,7 +451,7 @@ class Attributes implements ProductsDataPostProcessorInterface
              * @var Attribute $attribute
              */
             foreach ($attributesArr as $attributeCode => $attribute) {
-                if ($this->isAttributeSkipped($attribute, $isSingleProduct, $isCompare)) {
+                if ($this->isAttributeSkipped($attribute, $isSingleProduct, $isCompare, $isCartProduct)) {
                     continue;
                 }
 
