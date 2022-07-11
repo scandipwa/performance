@@ -8,9 +8,16 @@ interface ProductInterface {
     small_image: OptimizedProductImage @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     thumbnail: OptimizedProductImage @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     only_x_left_in_stock: Float @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
-    stock_status: ProductStockStatus @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
+    stock_status: ProductStockStatus @doc(description: "Stock status of the product") @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Products\\StockStatus")
+    stock_item: ProductStockItem @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Products\\StockItem")
     salable_qty: Float @resolver(class: "ScandiPWA\\Performance\\Model\\Resolver\\Value")
     s_attributes: [AttributeWithValue]
+}
+
+type ProductStockItem {
+    min_sale_qty: Int @doc(description: "Minimal amount of item that can be bought")
+    max_sale_qty: Int @doc(description: "Maximal amount of item that can be bought")
+    qty_increments: Int @doc(description: "Increment for number of items that can be bought")
 }
 
 type AttributeWithValue {
