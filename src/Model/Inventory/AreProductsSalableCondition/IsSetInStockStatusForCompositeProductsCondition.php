@@ -46,7 +46,7 @@ class IsSetInStockStatusForCompositeProductsCondition implements AreProductsSala
         $skusToCheck = array_flip($skuArray);
 
         foreach ($skuArray as $sku) {
-            if ($this->isSourceItemManagementAllowedForSku->execute($sku)) {
+            if ($this->isSourceItemManagementAllowedForSku->execute((string)$sku)) {
                 $result[$sku] = true;
                 unset($skusToCheck[$sku]);
             }

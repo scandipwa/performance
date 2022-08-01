@@ -42,14 +42,14 @@ class GetStockItemsData implements GetStockItemsDataInterface
     protected GetProductIdsBySkus $getProductIdsBySkus;
 
     /**
-     * @var IsSingleSourceModeInterface|null
+     * @var IsSingleSourceModeInterface
      */
-    protected ?IsSingleSourceModeInterface $isSingleSourceMode;
+    protected IsSingleSourceModeInterface $isSingleSourceMode;
 
     /**
-     * @var IsSourceItemManagementAllowedForSkuInterface|null
+     * @var IsSourceItemManagementAllowedForSkuInterface
      */
-    protected ?IsSourceItemManagementAllowedForSkuInterface $isSourceItemManagementAllowedForSku;
+    protected IsSourceItemManagementAllowedForSkuInterface $isSourceItemManagementAllowedForSku;
 
     /**
      * Cached results
@@ -70,8 +70,8 @@ class GetStockItemsData implements GetStockItemsDataInterface
         StockIndexTableNameResolverInterface $stockIndexTableNameResolver,
         DefaultStockProviderInterface $defaultStockProvider,
         GetProductIdsBySkus $getProductIdsBySkus,
-        ?IsSingleSourceModeInterface $isSingleSourceMode = null,
-        ?IsSourceItemManagementAllowedForSkuInterface $isSourceItemManagementAllowedForSku = null
+        IsSingleSourceModeInterface $isSingleSourceMode,
+        IsSourceItemManagementAllowedForSkuInterface $isSourceItemManagementAllowedForSku
     ) {
         $this->resource = $resource;
         $this->stockIndexTableNameResolver = $stockIndexTableNameResolver;
@@ -233,7 +233,7 @@ class GetStockItemsData implements GetStockItemsDataInterface
         foreach ($skuArray as $sku) {
             if ($this->defaultStockProvider->getId() !== $stockId
                 || $this->isSingleSourceMode->execute()
-                || !$this->isSourceItemManagementAllowedForSku->execute($sku)
+                || !$this->isSourceItemManagementAllowedForSku->execute((string)$sku)
             ) {
                 $result[$sku] = null;
                 unset($skusToCheck[$sku]);

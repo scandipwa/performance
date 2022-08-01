@@ -86,7 +86,7 @@ class GetStockItemsConfigurations implements GetStockItemsConfigurationsInterfac
 
         foreach ($skuArray as $sku) {
             if ($this->defaultStockProvider->getId() !== $stockId
-                && true === $this->isSourceItemManagementAllowedForSku->execute($sku)
+                && true === $this->isSourceItemManagementAllowedForSku->execute((string)$sku)
                 && false === $areProductsAssignedToStock[$sku]) {
                 // used instead of SkuIsNotAssignedToStockException in core
                 $result[$sku] = false;

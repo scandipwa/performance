@@ -107,7 +107,7 @@ class IsAnySourceItemInStockCondition implements AreProductsSalableInterface
         }
 
         foreach (array_keys($skusToCheck) as $sku) {
-            if (!$this->isSourceItemManagementAllowedForSku->execute($sku)) {
+            if (!$this->isSourceItemManagementAllowedForSku->execute((string)$sku)) {
                 // if source item management is not allowed, that is a final result for that sku
                 $result[$sku] = true;
 
