@@ -236,7 +236,7 @@ class Stocks implements ProductsDataPostProcessorInterface
             if ($inStock && !$isUnlimitedBackorders) {
                 $productSalableQty = $this->getProductSalableQty->execute($sku, $stockId);
 
-                if ($productSalableQty >= $minQty) {
+                if ($productSalableQty > 0 && $productSalableQty >= $minQty) {
                     $stockLeft = $productSalableQty - $minQty;
                     $thresholdQty = $stockItemConfiguration->getStockThresholdQty();
 
