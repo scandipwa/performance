@@ -227,8 +227,6 @@ class Stocks implements ProductsDataPostProcessorInterface
                 continue;
             }
 
-            $inStock = $qty > 0;
-
             if ($inStock) {
                 $productSalableQty = $this->getProductSalableQty->execute($sku, $stockId);
 
