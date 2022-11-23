@@ -22,6 +22,7 @@ use ScandiPWA\Performance\Model\Resolver\ResolveInfoFieldsTrait;
 use Magento\InventoryApi\Api\GetStockSourceLinksInterface;
 use Magento\InventoryApi\Api\Data\StockSourceLinkInterface;
 use Magento\InventoryCatalog\Model\GetStockIdForCurrentWebsite;
+use Magento\InventoryConfigurationApi\Api\Data\StockItemConfigurationInterface;
 use Magento\InventorySalesApi\Api\GetProductSalableQtyInterface;
 use Magento\InventoryConfigurationApi\Api\GetStockItemConfigurationInterface;
 
@@ -212,7 +213,6 @@ class Stocks implements ProductsDataPostProcessorInterface
         foreach ($stockItems as $stockItem) {
             $leftInStock = null;
             $productSalableQty = null;
-            $qty = $stockItem->getQuantity();
             $sku = $stockItem->getSku();
 
             $inStock = $stockItem->getStatus() === SourceItemInterface::STATUS_IN_STOCK;
@@ -227,29 +227,25 @@ class Stocks implements ProductsDataPostProcessorInterface
                 continue;
             }
 
-            $inStock = $qty > 0;
+            $stockItemConfiguration = $this->getStockItemConfiguration->execute($sku, $stockId);
+            $minQty = $stockItemConfiguration->getMinQty();
+            $isUnlimitedBackorders = $stockItemConfiguration->getBackorders()
+                !== StockItemConfigurationInterface::BACKORDERS_NO
+                && $minQty >= 0;
 
-            if ($inStock) {
+            if ($inStock && !$isUnlimitedBackorders) {
                 $productSalableQty = $this->getProductSalableQty->execute($sku, $stockId);
 
-                if ($productSalableQty > 0) {
-                    $stockItemConfiguration = $this->getStockItemConfiguration->execute($sku, $stockId);
-                    $minQty = $stockItemConfiguration->getMinQty();
+                if ($productSalableQty > 0 && $productSalableQty >= $minQty) {
+                    $stockLeft = $productSalableQty - $minQty;
+                    $thresholdQty = $stockItemConfiguration->getStockThresholdQty();
 
-                    if ($productSalableQty >= $minQty) {
-                        $stockLeft = $productSalableQty - $minQty;
-                        $thresholdQty = $stockItemConfiguration->getStockThresholdQty();
-
-                        if ($thresholdQty != 0) {
-                            $leftInStock = $stockLeft <= $thresholdQty ? (float)$stockLeft : null;
-                        }
-                    } else {
-                        $inStock = false;
+                    if ($thresholdQty != 0) {
+                        $leftInStock = $stockLeft <= $thresholdQty ? (float)$stockLeft : null;
                     }
                 } else {
                     $inStock = false;
                 }
-
             }
 
             if (isset($formattedStocks[$sku])
